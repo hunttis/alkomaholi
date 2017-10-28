@@ -25,6 +25,10 @@ var alkoHeaders = ["nro", "nimi", "valmistaja", "pullokoko", "hinta", "litrahint
 "rypäleet", "luonnehdinta", "pakkaustyyppi", "suljentatyyppi", "alkoholi-%", 
 "hapot g/l", "sokeri g/l", "kantavierrep-%", "väri", "katkerot", "energia", "valikoima"];
 
+var date = new Date();
+var dateString = date.getDate() + "." + (date.getMonth() + 1) + "." + date.getFullYear();
+console.log("Using data for date: " + dateString);
+
 if (typeof localStorage === "undefined" || localStorage === null) {
   console.log("Create local storage");
   var LocalStorage = require('node-localstorage').LocalStorage;
@@ -32,18 +36,12 @@ if (typeof localStorage === "undefined" || localStorage === null) {
   console.log("Created local storage");
 }
 
-var loadedData = localStorage.getItem("alkodata");
+var loadedData = JSON.parse(localStorage.getItem("alkodata" + dateString));
 var server = http.createServer(app);
 
-var date = new Date();
-var dateString = date.getDate() + "." + (date.getMonth() + 1) + "." + date.getFullYear();
-console.log(dateString);
+initializeServer();
 
-app.get('/', function(req, res, next) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Content-Type", "application/json");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token");
+function initializeServer() {
   if (!loadedData) {
     var fullUrl = urlStart + filenameStart + dateString + fileExtension;
     console.log("No data yet, loading from: ", fullUrl);
@@ -56,17 +54,48 @@ app.get('/', function(req, res, next) {
         console.log("writing worksheet..", wb.SheetNames);
         var sheet = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], 
           {header: alkoHeaders});
-        localStorage.setItem("alkodata", JSON.stringify(sheet));
+        localStorage.setItem("alkodata" + dateString, JSON.stringify(sheet));
         loadedData = sheet;
         console.log("--- End of data");
-        res.send(JSON.stringify(loadedData));
+        // res.send("server ready");
+        // res.send(JSON.stringify(loadedData));
       });
   } else {
     console.log("Using cached data..");
-    res.send(JSON.stringify(loadedData));
-    console.log("Sent response");
+    // res.send("server ready");
+    // res.send(JSON.stringify(loadedData));
+    // console.log("Sent response");
   }
+}
+
+app.use('/alldata', function(req, res, next) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Content-Type", "application/json");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token");
+  res.send(JSON.stringify(loadedData));
 });
+
+app.use('/data', function(req, res, next) {
+  console.log('Request parameters: ', req.query);
+
+  var searchTerms = req.query.query;
+  if (!searchTerms) {
+    searchTerms = "dom";
+  }
+
+  var filteredData = loadedData.filter(data => {
+    // console.log('Checking', data);
+    if (data.nimi) {
+      return data.nimi.toLowerCase().indexOf(searchTerms.toLowerCase()) !== -1
+    }
+    return false;
+  });
+
+  res.send(JSON.stringify(filteredData));
+});
+
+app.use(express.static('public'));
 
 var port = process.env.PORT || 8080;
 app.set('port', port);
