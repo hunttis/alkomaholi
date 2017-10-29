@@ -5,6 +5,7 @@ var http = require('http');
 var xlsx = require('xlsx');
 
 var cors = require('cors');
+var moment = require('moment');
 
 var app = express();
 
@@ -25,9 +26,6 @@ var alkoHeaders = ["nro", "nimi", "valmistaja", "pullokoko", "hinta", "litrahint
 "rypäleet", "luonnehdinta", "pakkaustyyppi", "suljentatyyppi", "alkoholi-%", 
 "hapot g/l", "sokeri g/l", "kantavierrep-%", "väri", "katkerot", "energia", "valikoima"];
 
-var date = new Date();
-var dateString = date.getDate() + "." + (date.getMonth() + 1) + "." + date.getFullYear();
-console.log("Using data for date: " + dateString);
 
 if (typeof localStorage === "undefined" || localStorage === null) {
   console.log("Create local storage");
@@ -36,35 +34,53 @@ if (typeof localStorage === "undefined" || localStorage === null) {
   console.log("Created local storage");
 }
 
-var loadedData = JSON.parse(localStorage.getItem("alkodata" + dateString));
+// var loadedData = JSON.parse(localStorage.getItem("alkodata" + dateString));
 var server = http.createServer(app);
 
 initializeServer();
 
 function initializeServer() {
-  if (!loadedData) {
-    var fullUrl = urlStart + filenameStart + dateString + fileExtension;
-    console.log("No data yet, loading from: ", fullUrl);
-    fetch(fullUrl)
-      .then(response => response.buffer())
-      .then(buffer => {
-        var wb = xlsx.read(buffer, {type: "buffer"});
-        console.log("writing workbook..");
-        localStorage.setItem("alkodata", JSON.stringify(wb));
-        console.log("writing worksheet..", wb.SheetNames);
-        var sheet = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], 
-          {header: alkoHeaders});
-        localStorage.setItem("alkodata" + dateString, JSON.stringify(sheet));
-        loadedData = sheet;
-        console.log("--- End of data");
-        // res.send("server ready");
-        // res.send(JSON.stringify(loadedData));
-      });
-  } else {
-    console.log("Using cached data..");
+  var today = moment();
+  loadedData = getDataForSpecificDay(today);
+}
+
+function retrieveData(forDate) {
+  var dateString = forDate.format('D.M.YYYY');
+  console.log("Loading data for: " + dateString);
+  
+  var fullUrl = urlStart + filenameStart + dateString + fileExtension;
+  console.log("No data yet, loading from: ", fullUrl);
+  
+  fetch(fullUrl)
+  .then(response => response.buffer())
+  .then(buffer => {
+    var wb = xlsx.read(buffer, {type: "buffer"});
+    console.log("writing workbook..");
+    localStorage.setItem("alkodata", JSON.stringify(wb));
+    console.log("writing worksheet..", wb.SheetNames);
+    var sheet = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], 
+      {header: alkoHeaders});
+    localStorage.setItem("alkodata" + dateString, JSON.stringify(sheet));
+    loadedData = sheet;
+    console.log("--- End of data");
     // res.send("server ready");
     // res.send(JSON.stringify(loadedData));
-    // console.log("Sent response");
+  })
+  .catch((error) => {
+    console.log("No data for this day on alko's servers!");
+    var dayBefore = moment().subtract(1, 'day');
+    return getDataForSpecificDay(dayBefore);
+  });
+}
+
+function getDataForSpecificDay(forDate) {
+  var dateString = forDate.format('D.M.YYYY');
+  console.log("Trying to load data for date: " + dateString);  
+  var cachedData = JSON.parse(localStorage.getItem("alkodata" + dateString));
+  if (cachedData) {
+    return cachedData;
+  } else {
+    return retrieveData(forDate);
   }
 }
 
