@@ -60,15 +60,24 @@ class App extends Component {
     return (
       <div className="App">
         <h1>AlkoAPI</h1>
-        <div>
-          <input type="text" name="search" onChange={this.handleChange}></input>
+        <div className="searchcontainer">
+          <input className="searchinput" placeholder="Kirjoita tuotteen nimi tai osa siitä" type="text" name="search" onChange={this.handleChange}></input>
         </div>
-        <div><table><tbody>
+        <div><table className="resultstable">
+          <thead>
+          <th>Nimi</th>
+          <th>€</th>
+          <th>€/l</th>
+          <th>%</th>
+          </thead>
+          <tbody>
           {
             this.state.alkodata.map(item => {
               return <tr key={item.nimi + item.nro}>
                   <td>{item.nimi}</td>
                   <td>{item.hinta}</td>
+                  <td>{item.litrahinta}</td>
+                  <td>{item['alkoholi-%']}</td>
                 </tr>
             })
           }
