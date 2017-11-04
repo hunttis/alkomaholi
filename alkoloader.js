@@ -61,7 +61,7 @@ class AlkoLoader {
   }
 
   formatDate(date) {
-    return date.format('D.M.YYYY');
+    return date.format('DD.MM.YYYY');
   }
 }
 
