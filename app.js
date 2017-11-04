@@ -49,6 +49,11 @@ app.use('/alldata', function(req, res, next) {
   res.send(JSON.stringify(loadedData));
 });
 
+function matches(searchFor, searchFrom) {
+  const from = searchFrom || '';
+  return from.toLowerCase().indexOf(searchFor.toLowerCase()) !== -1;
+}
+
 app.use('/data', function(req, res, next) {
   console.log('Request parameters: ', req.query);
 
@@ -59,8 +64,8 @@ app.use('/data', function(req, res, next) {
 
   var filteredData = loadedData.filter(data => {
     // console.log('Checking', data);
-    if (data.nimi) {
-      return data.nimi.toLowerCase().indexOf(searchTerms.toLowerCase()) !== -1
+    if (data.nimi || data.tyyppi) {
+      return matches(searchTerms, data.nimi) || matches(searchTerms, data.tyyppi);
     }
     return false;
   });
