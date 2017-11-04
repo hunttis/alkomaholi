@@ -9,7 +9,7 @@ class LocalCache {
     if (typeof localStorage === "undefined" || localStorage === null) {
       console.log("Create local storage");
       var LocalStorage = require('node-localstorage').LocalStorage;
-      localStorage = new LocalStorage('./alko', 20 * 1024 * 1024);
+      localStorage = new LocalStorage('./alko', 100 * 1024 * 1024);
       console.log("Created local storage");
     }
   }
