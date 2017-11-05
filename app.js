@@ -21,38 +21,30 @@ initializeServer();
 
 function initializeServer() {
   const today = moment();
-  // console.log('ALL FOR DAY:', alkoLoader.getAllDataForDay(moment()));
+  alkoLoader.getAllDataForDay(moment()).then((result) => {
+    console.log("Today's result size: " + result.length);
+  });
 }
 
 app.get('/alldata', function(req, res, next) {
-  var results = alkoLoader.getAllDataForDay(moment()).then((result) => {
+  alkoLoader.getAllDataForDay(moment()).then((result) => {
     console.log('Results are here', result.length);
     res.json(result);
+  }).catch((err) => {
+    res.status(500).send(err);
   });
-  
 });
-
-function matches(searchTerms, searchFrom) {
-  const haystack = searchFrom.join('').toLowerCase();
-  if (!haystack) {
-    return false;
-  }
-
-  const needles = searchTerms.split(/\W/);
-  return needles.reduce((acc, searchTerm) => { return acc && haystack.includes(searchTerm.toLowerCase())}, true);
-}
 
 app.get('/data', function(req, res, next) {
   console.log('Request parameters: ', req.query);
 
   const searchTerms = req.query.query || 'dom';
 
-  const filteredData = loadedData.filter(data => {
-    // console.log('Checking', data);
-    return matches(searchTerms, [data.nimi, data.tyyppi]);
-  });
-
-  res.json(filteredData);
+  alkoLoader.searchData(searchTerms).then((results) => {
+    res.json(results);
+  }).catch((err) => {
+    res.status(500).json({});
+  })
 });
 
 app.get('/refreshdata', function(req, res, next) {

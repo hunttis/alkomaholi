@@ -10,6 +10,9 @@ class AlkoDB {
   constructor() {
     console.log('Cloudant set up starting');
     
+    this.memoryData = null;
+    this.memoryDataDate = null;
+
     this.cloudant = Cloudant({
       url: cloudantUrl, 
       account: cloudantUser, 
@@ -111,35 +114,50 @@ class AlkoDB {
     const dateQuery = date.format('DD.MM.YYYY');
     return db.list({include_docs: true}).then(result => {
       console.log("Result size: ", result.rows.length);
-      console.log("Result Row: ", result.rows[1]);
+      // console.log("Result Row: ", result.rows[1]);
 
       return result.rows
         .filter(item => item.doc.pvm === dateQuery)
         .map(item => item.doc);
     }).catch((err) => {
-      console.log("ERROR", err);
+      console.log("ERROR IN DB", err);
       return {};
-    })
+    });
+  }
 
-    // return {}
-    // return db.list().filter(item => {
-    //   return item.pvm === dateQuery
-    // });
-    // .then((result) => {
-    //   console.log('All data for day successful', result.length);
-    //   // console.log(result);
-    //   return result;
-    // })
-    // .catch((err) => {
-    //   console.log('**** ERROR GETTING DATA FOR DATE');
-    //   console.log(err);
-    //   console.log('ERROR GETTING DATA FOR DATE ****');
-    //   return {};
-    // })
+  async updateMemoryData() {
+    if (!moment().isSame(this.memoryDataDate, 'day')){
+      this.memoryData = await this.getDataForDay(moment());
+      this.memoryDataDate = moment();
+    }
   }
 
   getDataWithTerms(searchTerms) {
+    const db = this.cloudant.db.use('alkodata');
+    const dateQuery = moment().format('DD.MM.YYYY');
 
+    return this.updateMemoryData().then(() => {
+      return this.memoryData.filter(item => {
+        return this.matches(searchTerms, Object.values(item));
+      });
+    }).catch((err) => {
+      console.log("ERROR IN DB TERMS SEARCH", err);
+      return {};
+    });  
+  }
+  
+  matches(searchTerms, searchFrom) {
+    const haystack = searchFrom.join('').toLowerCase();
+    if (!haystack) {
+      return false;
+    }
+  
+    const needles = searchTerms.split(/\W/);
+    return needles.reduce((acc, searchTerm) => { return acc && haystack.includes(searchTerm.toLowerCase())}, true);
+  }
+
+  isDataFromToday() {
+    return moment().isSame(memoryData, 'day');
   }
 
 }
