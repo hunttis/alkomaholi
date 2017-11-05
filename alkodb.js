@@ -89,7 +89,7 @@ class AlkoDB {
   }
 
   checkIfCached(date) {
-    return false;
+    // return false;
     var cachedb = this.cloudant.db.use('cachelog');
     var cachedData = cachedb.get('cached-' + date.format('DD.MM.YYYY'), (err, body) => {
       if (err) {
@@ -109,9 +109,13 @@ class AlkoDB {
   getDataForDay(date) {
     const db = this.cloudant.db.use('alkodata');
     const dateQuery = date.format('DD.MM.YYYY');
-    return db.list().then(result => {
-      // console.log(result);
-      return result.rows.filter(item => item.pvm === dateQuery);
+    return db.list({include_docs: true}).then(result => {
+      console.log("Result size: ", result.rows.length);
+      console.log("Result Row: ", result.rows[1]);
+
+      return result.rows
+        .filter(item => item.doc.pvm === dateQuery)
+        .map(item => item.doc);
     }).catch((err) => {
       console.log("ERROR", err);
       return {};

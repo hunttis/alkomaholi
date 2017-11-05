@@ -25,7 +25,7 @@ function initializeServer() {
 }
 
 app.get('/alldata', function(req, res, next) {
-  return alkoLoader.getAllDataForDay(moment()).then((result) => {
+  var results = alkoLoader.getAllDataForDay(moment()).then((result) => {
     console.log('Results are here', result.length);
     res.json(result);
   });

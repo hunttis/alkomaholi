@@ -104,10 +104,7 @@ class AlkoLoader {
   }
 
   getAllDataForDay(date) {
-    console.log('Finding...');
-    return this.alkodb.getDataForDay(date).then((result) => {
-      return result;
-    });
+    return this.alkodb.getDataForDay(date);
   }
 }
 
