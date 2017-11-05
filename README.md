@@ -9,8 +9,6 @@ This app downloads and parses that form and serves it in a searchable form.
 
 Currently the server and client are built separate, and there is a clunky way to run the server and keep the client updated.
 
-You need `nodemon` installed.
-
 Open a terminal in the client-directory and run `npm run dev`.
 
 Open a second terminal in the main directory and run `npm run dev`.
