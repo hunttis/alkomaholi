@@ -66,6 +66,7 @@ class App extends Component {
         <div><table className="resultstable">
           <thead>
           <th>Nimi</th>
+          <th>Tyyppi</th>
           <th>€</th>
           <th>€/l</th>
           <th>%</th>
@@ -75,6 +76,7 @@ class App extends Component {
             this.state.alkodata.map(item => {
               return <tr key={item.nimi + item.nro}>
                   <td>{item.nimi}</td>
+                  <td>{item.tyyppi}</td>
                   <td>{item.hinta}</td>
                   <td>{item.litrahinta}</td>
                   <td>{item['alkoholi-%']}</td>
