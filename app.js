@@ -46,7 +46,7 @@ app.get('/alldata', function(req, res, next) {
 });
 
 function matches(searchFor, searchFrom = '') {
-  return searchFrom.toLowerCase().indexOf(searchFor.toLowerCase()) !== -1;
+  return searchFrom.toLowerCase().includes(searchFor.toLowerCase())
 }
 
 app.get('/data', function(req, res, next) {
