@@ -9,35 +9,27 @@ const Bluebird = require('bluebird');
 
 const AlkoLoader = require('./alkoloader');
 const alkoLoader = new AlkoLoader();
-console.log(alkoLoader);
 
 fetch.Promise = Bluebird;
 
 const app = express();
 app.use(cors());
 
-let localStorage;
-let loadedData;
-
-if (typeof localStorage === "undefined" || localStorage === null) {
-  console.log("Create local storage");
-  const LocalStorage = require('node-localstorage').LocalStorage;
-  localStorage = new LocalStorage('./alko', 20 * 1024 * 1024);
-  console.log("Created local storage");
-}
-
-// var loadedData = JSON.parse(localStorage.getItem("alkodata" + dateString));
 const server = http.createServer(app);
 
 initializeServer();
 
 function initializeServer() {
   const today = moment();
-  loadedData = alkoLoader.getDataForSpecificDay(today);
+  // console.log('ALL FOR DAY:', alkoLoader.getAllDataForDay(moment()));
 }
 
 app.get('/alldata', function(req, res, next) {
-  res.json(loadedData);
+  return alkoLoader.getAllDataForDay(moment()).then((result) => {
+    console.log('Results are here', result.length);
+    res.json(result);
+  });
+  
 });
 
 function matches(searchTerms, searchFrom) {

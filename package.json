@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "bluebird": "^3.5.1",
+    "cloudant": "^1.10.0",
     "cors": "^2.8.4",
     "es6-promise": "^4.1.1",
     "express": "~4.15.5",
