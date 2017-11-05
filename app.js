@@ -41,12 +41,8 @@ function initializeServer() {
   loadedData = alkoLoader.getDataForSpecificDay(today);
 }
 
-app.use('/alldata', function(req, res, next) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Content-Type", "application/json");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, X-Auth-Token");
-  res.send(JSON.stringify(loadedData));
+app.get('/alldata', function(req, res, next) {
+  res.json(loadedData);
 });
 
 function matches(searchFor, searchFrom) {
