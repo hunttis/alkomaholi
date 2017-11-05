@@ -50,23 +50,15 @@ function matches(searchFor, searchFrom) {
   return from.toLowerCase().indexOf(searchFor.toLowerCase()) !== -1;
 }
 
-app.use('/data', function(req, res, next) {
+app.get('/data', function(req, res, next) {
   console.log('Request parameters: ', req.query);
 
-  var searchTerms = req.query.query;
-  if (!searchTerms) {
-    searchTerms = "dom";
-  }
+  const searchTerms = req.query.query || "dom";
+  console.log('searchTerms', searchTerms)
 
-  var filteredData = loadedData.filter(data => {
-    // console.log('Checking', data);
-    if (data.nimi || data.tyyppi) {
-      return matches(searchTerms, data.nimi) || matches(searchTerms, data.tyyppi);
-    }
-    return false;
-  });
+  const filteredData = loadedData.filter(data => matches(searchTerms, data.nimi) || matches(searchTerms, data.tyyppi));
 
-  res.send(JSON.stringify(filteredData));
+  res.json(filteredData);
 });
 
 app.use('/refreshdata', function(req, res, next) {
