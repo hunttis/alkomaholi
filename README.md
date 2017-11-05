@@ -17,3 +17,9 @@ The dev script for the client is not likely to work on windows, since it uses th
 
 When the UI is modified, it gets rebuilt and deployed to the public directory under the main directory. 
 This is pretty far from optimal, but will be fixed in the future.
+
+## Cloudant
+
+For deving, you need Cloudant running in port 8081. Easiest way to achieve this is with docker (and docker-compose)
+`docker-compose pull`
+`docker-compose up`

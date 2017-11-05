@@ -11,8 +11,8 @@ const Bluebird = require('bluebird');
 fetch.Promise = Bluebird;
 
 
-// const urlStart = "https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/";
-const urlStart = "http://localhost:8080/";
+const urlStart = "https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/";
+// const urlStart = "http://localhost:8080/";
 const filenameStart = "alkon-hinnasto-tekstitiedostona";
 const fileExtension = ".xls";
 const alkoHeaders = ["nro", "nimi", "valmistaja", "pullokoko", "hinta", "litrahinta", 
@@ -26,6 +26,7 @@ class AlkoLoader {
   constructor() {
     console.log('Creating alkoloader');
     this.alkodb = new AlkoDB();
+    this.getDataForSpecificDay(moment());
   }
 
   getDataForSpecificDay(forDate) {
@@ -107,7 +108,6 @@ class AlkoLoader {
     return this.alkodb.getDataForDay(date).then((result) => {
       return result;
     });
-    
   }
 }
 

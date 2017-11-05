@@ -89,6 +89,7 @@ class AlkoDB {
   }
 
   checkIfCached(date) {
+    return false;
     var cachedb = this.cloudant.db.use('cachelog');
     var cachedData = cachedb.get('cached-' + date.format('DD.MM.YYYY'), (err, body) => {
       if (err) {
