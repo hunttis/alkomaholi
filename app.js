@@ -45,9 +45,8 @@ app.get('/alldata', function(req, res, next) {
   res.json(loadedData);
 });
 
-function matches(searchFor, searchFrom) {
-  const from = searchFrom || '';
-  return from.toLowerCase().indexOf(searchFor.toLowerCase()) !== -1;
+function matches(searchFor, searchFrom = '') {
+  return searchFrom.toLowerCase().indexOf(searchFor.toLowerCase()) !== -1;
 }
 
 app.get('/data', function(req, res, next) {
