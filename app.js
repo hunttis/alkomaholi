@@ -60,7 +60,7 @@ app.get('/data', function(req, res, next) {
   res.json(filteredData);
 });
 
-app.use('/refreshdata', function(req, res, next) {
+app.get('/refreshdata', function(req, res, next) {
   initializeServer();
   res.send('Refreshing.. <a href="/">Back to frontpage</a>');
 });
