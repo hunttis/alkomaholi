@@ -40,19 +40,27 @@ app.get('/alldata', function(req, res, next) {
   res.json(loadedData);
 });
 
-function matches(searchFor, searchFrom = '') {
-  return searchFrom.toLowerCase().includes(searchFor.toLowerCase())
+function matches(searchTerms, searchFrom) {
+  const haystack = searchFrom.join('').toLowerCase();
+  if (!haystack) {
+    return false;
+  }
+
+  const needles = searchTerms.split(/\W/);
+  return needles.reduce((acc, searchTerm) => { return acc && haystack.includes(searchTerm.toLowerCase())}, true);
 }
 
 app.get('/data', function(req, res, next) {
   console.log('Request parameters: ', req.query);
 
-  const searchTerms = req.query.query || "dom";
-  console.log('searchTerms', searchTerms)
+  const searchTerms = req.query.query || 'dom';
 
-  const filteredData = loadedData.filter(data => matches(searchTerms, data.nimi) || matches(searchTerms, data.tyyppi));
+  const filteredData = loadedData.filter(data => {
+    // console.log('Checking', data);
+    return matches(searchTerms, [data.nimi, data.tyyppi]);
+  });
 
-  res.json(filteredData);
+  res.send(JSON.stringify(filteredData));
 });
 
 app.get('/refreshdata', function(req, res, next) {
