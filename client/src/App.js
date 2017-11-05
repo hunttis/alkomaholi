@@ -10,36 +10,15 @@ class App extends Component {
   }
 
   componentWillMount() {
-    var myHeaders = {'Content-Type': 'application/json', 'Access-Control-Allow-Origin':'*'};
-            
-    var myInit = {
-      method: 'GET',
-      headers: myHeaders
-    }
-    
-    fetch('/data?query=nothing', myInit)
-      .then(res => res.json())
-      .then(json => {
-        console.log("Got alko data!", json);
-        this.setState({alkodata: json});
-      })
+    this.setState({alkodata: []});
   }
 
   searchData(searchTerms) {
-    var myHeaders = {'Content-Type': 'application/json', 'Access-Control-Allow-Origin':'*'};
-    
-    var myInit = {
-      method: 'GET',
-      mode: 'cors',
-      headers: myHeaders
-    }
-
-    var url = '/data?query=' + searchTerms;
+    const url = '/data?query=' + searchTerms;
     console.log('Calling url', url);
     console.log('Should be searching with "', searchTerms,'"');
 
-
-    fetch(url, myInit)
+    fetch(url)
     .then(res => res.json())
     .then(json => {
       console.log("Got alko data!", json);
