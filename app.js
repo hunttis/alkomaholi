@@ -60,7 +60,7 @@ app.get('/data', function(req, res, next) {
     return matches(searchTerms, [data.nimi, data.tyyppi]);
   });
 
-  res.send(JSON.stringify(filteredData));
+  res.json(filteredData);
 });
 
 app.get('/refreshdata', function(req, res, next) {
