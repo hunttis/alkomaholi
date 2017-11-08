@@ -127,19 +127,18 @@ class AlkoDB {
 
   async updateMemoryData() {
     if (!moment().isSame(this.memoryDataDate, 'day')){
+      console.log('No data in memory yet for this day!');
       this.memoryData = await this.getDataForDay(moment());
       this.memoryDataDate = moment();
     }
+    return this.memoryData;    
   }
 
   getDataWithTerms(searchTerms) {
     const db = this.cloudant.db.use('alkodata');
-    const dateQuery = moment().format('DD.MM.YYYY');
 
-    return this.updateMemoryData().then(() => {
-      return this.memoryData.filter(item => {
-        return this.matches(searchTerms, Object.values(item));
-      });
+    return this.updateMemoryData().then(results => {
+      return results.filter(item => this.matches(searchTerms, Object.values(item)));
     }).catch((err) => {
       console.log("ERROR IN DB TERMS SEARCH", err);
       return {};

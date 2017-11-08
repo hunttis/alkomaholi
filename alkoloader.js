@@ -26,8 +26,9 @@ class AlkoLoader {
   constructor() {
     console.log('Creating alkoloader');
     this.alkodb = new AlkoDB();
-    this.getDataForSpecificDay(moment());
+    this.getDataForSpecificDay(moment());  
   }
+
 
   getDataForSpecificDay(forDate) {
     var dateString = this.formatDate(forDate);
@@ -36,12 +37,18 @@ class AlkoLoader {
     // var cachedData = JSON.parse(localCache.getItem("alkodata" + dateString));
     const dayAlreadyCached = this.alkodb.checkIfCached(forDate);
     console.log("DATABASE WOULD CONTAIN CACHED DATA? ", dayAlreadyCached);
-
+    
     if (dayAlreadyCached) {
       console.log('Using cached data');
+      return this.alkodb.checkIfCached(forDate);
     } else {
       console.log('No cached data, retrieving from Alko');
-      this.retrieveData(forDate);
+      return this.retrieveData(forDate).then((resultDate) => {
+        console.log("USING DATA FOR: " + resultDate);
+        return this.alkodb.checkIfCached(resultDate);
+      }).then((results) => {
+        return results;
+      });
     }
   }
 
@@ -81,7 +88,7 @@ class AlkoLoader {
       console.log("SHEET SIZE: ", modifiedSheet.length);
 
       this.alkodb.storeBulk(forDate, modifiedSheet);
-      return modifiedSheet;
+      return forDate;
     })
     .catch((error) => {
       console.log(error);

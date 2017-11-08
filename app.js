@@ -21,9 +21,7 @@ initializeServer();
 
 function initializeServer() {
   const today = moment();
-  alkoLoader.getAllDataForDay(moment()).then((result) => {
-    console.log("Today's result size: " + result.length);
-  });
+  alkoLoader.getDataForSpecificDay(moment());
 }
 
 app.get('/alldata', function(req, res, next) {
