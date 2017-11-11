@@ -7,7 +7,7 @@
     "yarn": "1.2.1"
   },
   "scripts": {
-    "dev": "nodemon --exec npm start",
+    "dev": "LOCAL=true nodemon --exec npm start",
     "start": "node ./app.js"
   },
   "dependencies": {

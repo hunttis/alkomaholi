@@ -26,30 +26,35 @@ class AlkoLoader {
   constructor() {
     console.log('Creating alkoloader');
     this.alkodb = new AlkoDB();
-    this.getDataForSpecificDay(moment());  
+    setTimeout(() => this.getDataForSpecificDay(moment()), 5000);
   }
 
-
   getDataForSpecificDay(forDate) {
+    console.log("-----*****----- Db class: " + !!this.alkodb + " DB Ready: " + this.alkodb?this.alkodb.isDBReady():"Not there");
+    if (!this.alkodb || !this.alkodb.isDBReady()) {
+      console.log("nope");
+      return {};
+    }
     var dateString = this.formatDate(forDate);
     console.log("Trying to load data for date: " + dateString);  
 
     // var cachedData = JSON.parse(localCache.getItem("alkodata" + dateString));
-    const dayAlreadyCached = this.alkodb.checkIfCached(forDate);
-    console.log("DATABASE WOULD CONTAIN CACHED DATA? ", dayAlreadyCached);
-    
-    if (dayAlreadyCached) {
-      console.log('Using cached data');
-      return this.alkodb.checkIfCached(forDate);
-    } else {
-      console.log('No cached data, retrieving from Alko');
-      return this.retrieveData(forDate).then((resultDate) => {
-        console.log("USING DATA FOR: " + resultDate);
-        return this.alkodb.checkIfCached(resultDate);
-      }).then((results) => {
-        return results;
-      });
-    }
+    return this.alkodb.checkIfCached(forDate).then((dayAlreadyCached) => {
+      console.log("DATABASE WOULD CONTAIN CACHED DATA? ", dayAlreadyCached);
+      
+      if (dayAlreadyCached) {
+        console.log('Using cached data');
+        return this.alkodb.checkIfCached(forDate);
+      } else {
+        console.log('No cached data, retrieving from Alko');
+        return this.retrieveData(forDate).then((resultDate) => {
+          console.log("USING DATA FOR: " + resultDate);
+          return this.alkodb.checkIfCached(resultDate);
+        }).then((results) => {
+          return results;
+        });
+      }  
+    });
   }
 
   retrieveData(forDate) {
@@ -85,21 +90,40 @@ class AlkoLoader {
         }
       });
 
-      console.log("SHEET SIZE: ", modifiedSheet.length);
+      if (modifiedSheet && modifiedSheet.length > 0) {
+        console.log("SHEET SIZE: ", modifiedSheet.length);
+        this.alkodb.storeCache(forDate);
+        this.storeItems(forDate, modifiedSheet, 0);        
+      } else {
+        console.log('No sheet!');
+      }
 
-      this.alkodb.storeBulk(forDate, modifiedSheet);
       return forDate;
     })
     .catch((error) => {
       console.log(error);
       console.log("No data for this day on alko's servers!");
-      var dayBefore = forDate.subtract(1, 'day');
-      if (dayBefore.isBetween(moment(forDate).add(1, 'days'), moment(forDate).subtract(7, 'days'))) {
+      var dayBefore = moment(forDate).subtract(1, 'day');
+      if (dayBefore.isAfter(moment().subtract(4, 'days'))) {
         return this.getDataForSpecificDay(dayBefore);
+      } else {
+        console.log("No data found in the last few days!");
       }
-      console.log("Day", dayBefore, "is not between", moment(forDate).add(1, 'days'), "and", moment(forDate).subtract(7, 'days'));
-      console.log("No data found in the previous week!");
     });
+  }
+
+  storeItems(forDate, data, index) {
+    var targetIndex = index + 100;
+    if (targetIndex < data.length) {
+      console.log('Timed store between', index, targetIndex);
+      setTimeout(() => {
+        this.alkodb.storeBulk(forDate, data.slice(index, targetIndex));
+        this.storeItems(forDate, data, targetIndex);
+      }, 1000);
+    } else {
+      console.log('Storing last ones..');
+      this.alkodb.storeBulk(forDate, data.slice(index));
+    }
   }
 
   formatDate(date) {
