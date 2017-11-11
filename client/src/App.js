@@ -4,7 +4,7 @@ import './App.css';
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {alkodata: [{nimi: 'Odota'}], searchResults: [], searchTerms: ""}
+    this.state = {alkodata: [{nimi: 'Odota'}], searchResults: [], searchTerms: "", typing: false, typingTimeout: 0}
     this.handleChange = this.handleChange.bind(this);
     this.searchData = this.searchData.bind(this);
   }
@@ -28,11 +28,21 @@ class App extends Component {
 
   handleChange(event) {
     console.log(event.target.value);
+
+    if (this.state.typingTimeout) {
+      clearTimeout(this.state.typingTimeout);
+    }
+
     if (event.target.value.length > 2) {
-      this.searchData(event.target.value);
+      this.setState({searchTerms: event.target.value, typing: false, typingTimeout: setTimeout(() => {
+        console.log('Timeout for typing is out');
+        this.searchData(this.state.searchTerms);
+      }, 500)
+      });
     } else {
       console.log('Search not long enough');
     }
+
   }
 
   render() {
