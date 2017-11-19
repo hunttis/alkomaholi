@@ -1,7 +1,5 @@
 'use strict';
 
-// const LocalCache = require('./localcache');
-// const localCache = new LocalCache();
 const fetch = require('node-fetch');
 const moment = require('moment');
 const xlsx = require('xlsx');
@@ -26,7 +24,7 @@ class AlkoLoader {
   constructor() {
     console.log('Creating alkoloader');
     this.alkodb = new AlkoDB();
-    setTimeout(() => this.getDataForSpecificDay(moment()), 5000);
+    // setTimeout(() => this.getDataForSpecificDay(moment()), 5000);
   }
 
   getDataForSpecificDay(forDate) {
@@ -66,7 +64,7 @@ class AlkoLoader {
     
     return fetch(fullUrl)
     .then(response => response.buffer())
-    .then(buffer => {
+    .then(async buffer => {
       var wb = xlsx.read(buffer, {type: "buffer"});
 
       console.log("writing worksheet..", wb.SheetNames);
@@ -92,8 +90,9 @@ class AlkoLoader {
 
       if (modifiedSheet && modifiedSheet.length > 0) {
         console.log("SHEET SIZE: ", modifiedSheet.length);
-        this.alkodb.storeCache(forDate);
-        this.storeItems(forDate, modifiedSheet, 0);        
+        let cacheResult = await this.alkodb.storeCache(forDate, 'PROCESSING');
+        let bulkResult = await this.alkodb.storeBulk(forDate, data);
+        let cacheDoneResult = await this.alkodb.storeCache(forDate, 'DONE');       
       } else {
         console.log('No sheet!');
       }
@@ -101,29 +100,16 @@ class AlkoLoader {
       return forDate;
     })
     .catch((error) => {
-      console.log(error);
+      console.log('Error occured', error);
       console.log("No data for this day on alko's servers!");
       var dayBefore = moment(forDate).subtract(1, 'day');
       if (dayBefore.isAfter(moment().subtract(4, 'days'))) {
-        return this.getDataForSpecificDay(dayBefore);
+        // return this.getDataForSpecificDay(dayBefore);
+        return new Promise();
       } else {
         console.log("No data found in the last few days!");
       }
     });
-  }
-
-  storeItems(forDate, data, index) {
-    var targetIndex = index + 100;
-    if (targetIndex < data.length) {
-      console.log('Timed store between', index, targetIndex);
-      setTimeout(() => {
-        this.alkodb.storeBulk(forDate, data.slice(index, targetIndex));
-        this.storeItems(forDate, data, targetIndex);
-      }, 1000);
-    } else {
-      console.log('Storing last ones..');
-      this.alkodb.storeBulk(forDate, data.slice(index));
-    }
   }
 
   formatDate(date) {

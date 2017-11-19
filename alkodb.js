@@ -1,218 +1,216 @@
 const moment = require('moment');
-const Cloudant = require('cloudant');
+const _ = require('underscore');
 
-var vcapLocal;
+const mongoose = require('mongoose');
+mongoose.Promise = require('bluebird');
 
-try {
-  vcapLocal = require('./conf/cloudant-credentials.json');
-} catch (e) { }
+const productSchema = mongoose.Schema({
+  "nro": String,
+  "nimi": String,
+  "valmistaja": String,
+  "pullokoko": String,
+  "hinta": String,
+  "litrahinta": String,
+  "uutuus": String,
+  "hinnastojärjestys": String,
+  "tyyppi": String,
+  "erityisryhmä": String,
+  "oluttyyppi": String,
+  "valmistusmaa": String,
+  "alue": String,
+  "vuosikerta": String,
+  "etikettimerkintöjä": String,
+  "huomautus": String,
+  "rypäleet": String,
+  "luonnehdinta": String,
+  "pakkaustyyppi": String,
+  "suljentatyyppi": String,
+  "alkoholi-%": String,
+  "hapot g/l": String,
+  "sokeri g/l": String,
+  "kantavierrep-%": String,
+  "väri": String,
+  "katkerot": String,
+  "energia": String,
+  "valikoima": String,
+  "pvm": String,
+  "_id": String
+});
 
-const cloudantUser = process.env.LOCAL ? "admin" : vcapLocal.cloudantNoSQLDB.credentials.username;
-const cloudantPass = process.env.LOCAL ? "pass" : vcapLocal.cloudantNoSQLDB.credentials.password;
-const cloudantUrl = process.env.LOCAL ? 'http://localhost:8081' : vcapLocal.cloudantNoSQLDB.credentials.urlnocreds;
+const Product = mongoose.model('Product', productSchema);
+
+const daySchema = mongoose.Schema({
+  "_id": String,
+  "status": String
+})
+
+const Day = mongoose.model('Day', daySchema);
 
 class AlkoDB {
 
   constructor() {
-    console.log('Cloudant set up starting');
+    console.log('Mongo set up starting');
     
-    this.memoryData = null;
-    this.memoryDataDate = null;
-
     if (process.env.LOCAL) {
       console.log("RUNNING LOCAL ENV!!");
     } else {
       console.log("NOT RUNNING LOCAL!!!");
     }
 
-    var cloudantOpts = {};
-
+    let mongoURL;
     if (process.env.LOCAL) {
       console.log('Using local opts');
-      cloudantOpts = {
-        url: cloudantUrl, 
-        account: cloudantUser, 
-        password: cloudantPass,
-        plugin: 'promises'}
+      mongoURL = 'mongodb://localhost:27017';
     } else {
-      console.log('Using bluemix opts');
-      cloudantOpts = {
-        vcapServices: JSON.parse(process.env.VCAP_SERVICES),
-        plugin: 'promises'}
+      console.log('Using remote opts');
+      mongoURL = process.env.MONGO_URL;
     }
 
-    this.cloudant = Cloudant(cloudantOpts, (err, cloudant, reply) => {
 
-      if (reply) {
-        console.log('Got reply', reply);
-        this.initializeDbs(cloudant);
-      }
-      if (err) {
-        console.log('Or maybe error', err);  
-      }
-    });
-  }
-
-  initializeDbs(cloudant) {
-    cloudant.db.list((err, alldbs) => {
-      if (alldbs) {
-        console.log('-- All', alldbs.join(', '));
-        if (alldbs.indexOf('alkodata') == -1) {
-          console.log('Creating alkodata db');
-          this.createDb(cloudant, 'alkodata');
-        } else {
-          console.log('Alko data already exists');
-        }
-  
-        if (alldbs.indexOf('cachelog') == -1) {
-          console.log('Creating cache log db');
-          this.createDb(cloudant, 'cachelog');
-        } else {
-          console.log('Cache log already exists');
-        }
-      } else if (!err) {
-        console.log('-- No dbs, creating..');
-        this.createDb(cloudant, 'alkodata');
-        this.createDb(cloudant, 'cachelog');
-      }
-      console.log('Cloudant set up complete');
-      // console.log(this.getDataForDay(moment()));
-      if (err) {
-        console.log("RAN INTO SOME ERROR");
-        console.log(err);
-      }
-    });
-  }
-
-  createDb(cloudant, dbName) {
-    console.log('TRYING TO CREATE DB:', dbName);
-    cloudant.db.create(dbName, (err, body) => {
-      if (err) {
-        console.log(dbName, 'DB CREATE ERR:', err);
-      }
-      if (body) {
-        console.log(dbName, 'DB CREATE BODY:', body);
-      }
+    mongoose.connect(mongoURL).then(() =>{
+      console.log('Connected to Mongo!');
+    }).catch((err) => {
+      console.log('Error occured upon mongo connection!');
     })
   }
 
-  storeCache(date) {
-    var cachedb = this.cloudant.db.use('cachelog');
-    
-    cachedb.insert({date}, 'cached-' + date.format('DD.MM.YYYY'), (err, body) => {
-      if (err) {
-        console.log('CACHE STORE ERROR');
-        console.log(Object.keys(err));
-        console.log(err.reason);
-        console.log(err.description);
-      } else {
-        console.log('Cache insert operation ok!');
-      }
-    });
+
+  async storeCache(date, status) {
+
+    let day = await Day.findById({ _id: date.format('DD.MM.YYYY') });
+
+    if (!day) {
+      console.log('No existing day');
+      day = new Day({_id: date.format('DD.MM.YYYY'), status});
+    } else {
+      console.log('Existing day, just setting status', day);
+      day.status = status;
+    }
+  
+    day.save().then((result) => {
+      console.log('Day Status saved', day);
+    }).catch((err) => {
+      console.log('Failed to save day status', day);
+    })
   }
   
   storeBulk(date, data) {
-
-    var db = this.cloudant.db.use('alkodata');
     
     console.log('Bulk operation starting..');
 
-    db.bulk({docs: data}, (err) => {
-      if (err) {
-        console.log('BULK OPERATION ERROR');
-        console.log(Object.keys(err));
-        console.log(err.reason);
-        console.log(err.description);
-        console.log('... BULK OPERATION FAILED!');
-      } else {
-        console.log('... Bulk operation ok!');
-      }
-    });
+    Product.collection.insert(data).then((result) => {
+      console.log('Saved', data.length,'products successfully!');
+    }).catch((err) => {
+      console.log('Something went wrong with the product bulk operation', err);
+    })
+
   }
 
   isDBReady() {
-    return !!this.cloudant && !!this.cloudant.db;
+    return !!mongoose;
+  }
+
+  getDay(date) {
+    console.log('Trying to find day: ', date.format('DD.MM.YYYY'));
+    return Day.findById({ _id: date.format('DD.MM.YYYY') });
   }
 
   checkIfCached(date) {
-    if (this.cloudant && this.cloudant.db && this.cloudant.db.use('cachelog')) {
-      var cachedb = this.cloudant.db.use('cachelog');
-      return cachedb.get('cached-' + date.format('DD.MM.YYYY'), (err, body) => {
-        if (err) {
-          console.log('********** ERROR IN CACHE ACCESS **********');
-          console.log(err && err.error ? err.error : 'Probably missing?');
-          console.log('********** ERROR IN CACHE ACCESS **********');
-          return false;
-        } else if (body) {
-          console.log('-- Cache body');
-          console.log(body);
-          console.log('Cache body --');
-          return true;
-        } else {
-          console.log('No err and no body');
-          return false;
-        }
-      }).then((result) => {
-        console.log('Everything ok? ', result);
+    return this.getDay(date).then((day) => {
+      if (day && day.status === 'DONE') {
+        console.log('Yes we do!')
         return true;
-      }).catch((err) => {
-        console.log('Some unexpected error occured!');
-        console.log(err);
+      } else {
+        console.log('No we don\'t!');
         return false;
-      })
-    } else {
-      console.log('-----> Cache being accessed, but not ready yet');
+      }
+    }).catch((err) => {
+      console.log('Some unexpected error occured!', err);
       return false;
-    }
+    })
   }
 
   getDataForDay(date) {
-    const db = this.cloudant.db.use('alkodata');
     const dateQuery = date.format('DD.MM.YYYY');
-    return db.list({include_docs: true}).then(result => {
-      console.log("Result size: ", result.rows.length);
-
-      return result.rows
-        .filter(item => item.doc.pvm === dateQuery)
-        .map(item => item.doc);
+    return Product.find({pvm: dateQuery}).then((result) => {
+      console.log("Result size: ", result.length);
+      console.log(result);
+      return result;
     }).catch((err) => {
       console.log("ERROR IN DB", err);
       return {};
+    })
+  }
+
+  async getDataWithTerms(searchTerms) {
+
+    const needles = searchTerms.split(/\W/);
+    console.log('needles', needles);
+
+    const concat = (x,y) => x.concat(y)
+      
+    let searches = needles.map(async term => {
+      console.log('searching..', term);
+      return this.searchFromDB(term);
     });
-  }
 
-  async updateMemoryData() {
-    if (!moment().isSame(this.memoryDataDate, 'day')){
-      console.log('No data in memory yet for this day!');
-      this.memoryData = await this.getDataForDay(moment());
-      this.memoryDataDate = moment();
-    }
-    return this.memoryData;    
-  }
+    return Promise.all(searches).then((results) => {
+      // console.log(results);
+      const final = results.map((list) => {
+        console.log('List length:', list.length);
+        
+        let matchedItems = [];
+        
+        list.forEach((item) => {
+          let itemOnEachList = true;
+          results.forEach((listToCheck) => {
+            let itemOnList = false;
+            listToCheck.forEach((itemToCompareTo) => {
+              if (itemToCompareTo.nro === item.nro) {
+                itemOnList = true;
+              }
+            });
+            if (!itemOnList) {
+              itemOnEachList = false;
+            }
+          });
+          if (itemOnEachList) {
+            console.log('item found on each list', item.nimi);
+            matchedItems.push(item);
+          }
+        });
+        return matchedItems;
+      });
 
-  getDataWithTerms(searchTerms) {
-    const db = this.cloudant.db.use('alkodata');
+      const finalResult = _.uniq(_.flatten(final), (item) => item.nro);
+      console.log('Final result new way: ', finalResult.length);
 
-    return this.updateMemoryData().then(results => {
-      return results.filter(item => this.matches(searchTerms, Object.values(item)));
-    }).catch((err) => {
-      console.log("ERROR IN DB TERMS SEARCH", err);
-      return {};
-    });  
+      return finalResult;
+    });
   }
   
   matches(searchTerms, searchFrom) {
+    // console.log('looking for', searchTerms);
     const haystack = searchFrom.join('').toLowerCase();
     if (!haystack) {
       return false;
     }
-  
-    const needles = searchTerms.split(/\W/);
+
     return needles.reduce((acc, searchTerm) => { return acc && haystack.includes(searchTerm.toLowerCase())}, true);
   }
 
-  isDataFromToday() {
-    return moment().isSame(memoryData, 'day');
+  searchFromDB(searchTerm) {
+    console.log('SEARCHING DB FOR', searchTerm);
+    const dateQuery =  moment().format('DD.MM.YYYY');
+    const regex = new RegExp( ".*" + searchTerm + ".*", "i");
+
+    return Product.find({pvm: dateQuery}).or([
+      {nimi: regex},
+      {valmistaja: regex},
+      {tyyppi: regex},
+      {valmistusmaa: regex}
+    ]);
+
   }
 
 }

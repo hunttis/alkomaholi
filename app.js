@@ -18,9 +18,19 @@ app.use(cors());
 const server = http.createServer(app);
 
 initializeServer();
+setServerRefresh();
+
+function setServerRefresh() {
+  console.log('Setting server to refresh after an hour has passed');
+  setTimeout(() => {
+    console.log('Refreshing server!');
+    initializeServer();
+    setServerRefresh();
+  }, 3600000);
+}
+
 
 function initializeServer() {
-  const today = moment();
   alkoLoader.getDataForSpecificDay(moment());
 }
 
@@ -39,8 +49,10 @@ app.get('/data', function(req, res, next) {
   const searchTerms = req.query.query || 'dom';
 
   alkoLoader.searchData(searchTerms).then((results) => {
+    console.log('got results!', results.length);
     res.json(results);
   }).catch((err) => {
+    console.log('ERROR IN SEARCH', err);
     res.status(500).json({});
   })
 });
