@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "LOCAL=true nodemon --exec npm start",
-    "start": "node ./app.js"
+    "start": "node ./server/app.js"
   },
   "dependencies": {
     "bluebird": "^3.5.1",
@@ -27,6 +27,11 @@
     "xlsx": "^0.11.6"
   },
   "devDependencies": {
+    "eslint": "^4.11.0",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jsx-a11y": "^6.0.2",
+    "eslint-plugin-react": "^7.5.0",
     "nodemon": "^1.12.1"
   },
   "author": "Hunttis",
