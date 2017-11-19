@@ -9,58 +9,52 @@ const Bluebird = require('bluebird');
 
 const AlkoLoader = require('./alkoloader');
 const alkoLoader = new AlkoLoader();
-console.log(alkoLoader);
 
 fetch.Promise = Bluebird;
 
 const app = express();
 app.use(cors());
 
-let localStorage;
-let loadedData;
-
-if (typeof localStorage === "undefined" || localStorage === null) {
-  console.log("Create local storage");
-  const LocalStorage = require('node-localstorage').LocalStorage;
-  localStorage = new LocalStorage('./alko', 20 * 1024 * 1024);
-  console.log("Created local storage");
-}
-
-// var loadedData = JSON.parse(localStorage.getItem("alkodata" + dateString));
 const server = http.createServer(app);
 
 initializeServer();
+setServerRefresh();
+
+function setServerRefresh() {
+  console.log('Setting server to refresh after an hour has passed');
+  setTimeout(() => {
+    console.log('Refreshing server!');
+    initializeServer();
+    setServerRefresh();
+  }, 3600000);
+}
+
 
 function initializeServer() {
-  const today = moment();
-  loadedData = alkoLoader.getDataForSpecificDay(today);
+  alkoLoader.getDataForSpecificDay(moment());
 }
 
 app.get('/alldata', function(req, res, next) {
-  res.json(loadedData);
+  alkoLoader.getAllDataForDay(moment()).then((result) => {
+    console.log('Results are here', result.length);
+    res.json(result);
+  }).catch((err) => {
+    res.status(500).send(err);
+  });
 });
-
-function matches(searchTerms, searchFrom) {
-  const haystack = searchFrom.join('').toLowerCase();
-  if (!haystack) {
-    return false;
-  }
-
-  const needles = searchTerms.split(/\W/);
-  return needles.reduce((acc, searchTerm) => { return acc && haystack.includes(searchTerm.toLowerCase())}, true);
-}
 
 app.get('/data', function(req, res, next) {
   console.log('Request parameters: ', req.query);
 
   const searchTerms = req.query.query || 'dom';
 
-  const filteredData = loadedData.filter(data => {
-    // console.log('Checking', data);
-    return matches(searchTerms, [data.nimi, data.tyyppi]);
-  });
-
-  res.json(filteredData);
+  alkoLoader.searchData(searchTerms).then((results) => {
+    console.log('got results!', results.length);
+    res.json(results);
+  }).catch((err) => {
+    console.log('ERROR IN SEARCH', err);
+    res.status(500).json({});
+  })
 });
 
 app.get('/refreshdata', function(req, res, next) {
