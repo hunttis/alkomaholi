@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "LOCAL=true nodemon --exec npm start",
+    "lint": "eslint .",
     "start": "node ./server/app.js"
   },
   "dependencies": {

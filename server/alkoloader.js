@@ -1,26 +1,23 @@
-'use strict';
-
 const fetch = require('node-fetch');
 const moment = require('moment');
 const xlsx = require('xlsx');
 const AlkoDB = require('./alkodb');
-
 const Bluebird = require('bluebird');
+
 fetch.Promise = Bluebird;
 
 
-const urlStart = "https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/";
+const urlStart = 'https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/';
 // const urlStart = "http://localhost:8080/";
-const filenameStart = "alkon-hinnasto-tekstitiedostona";
-const fileExtension = ".xls";
-const alkoHeaders = ["nro", "nimi", "valmistaja", "pullokoko", "hinta", "litrahinta", 
-"uutuus", "hinnastojärjestys", "tyyppi", "erityisryhmä", "oluttyyppi", 
-"valmistusmaa", "alue", "vuosikerta", "etikettimerkintöjä", "huomautus", 
-"rypäleet", "luonnehdinta", "pakkaustyyppi", "suljentatyyppi", "alkoholi-%", 
-"hapot g/l", "sokeri g/l", "kantavierrep-%", "väri", "katkerot", "energia", "valikoima", "pvm", "_id"];
+const filenameStart = 'alkon-hinnasto-tekstitiedostona';
+const fileExtension = '.xls';
+const alkoHeaders = ['nro', 'nimi', 'valmistaja', 'pullokoko', 'hinta', 'litrahinta',
+  'uutuus', 'hinnastojärjestys', 'tyyppi', 'erityisryhmä', 'oluttyyppi',
+  'valmistusmaa', 'alue', 'vuosikerta', 'etikettimerkintöjä', 'huomautus',
+  'rypäleet', 'luonnehdinta', 'pakkaustyyppi', 'suljentatyyppi', 'alkoholi-%',
+  'hapot g/l', 'sokeri g/l', 'kantavierrep-%', 'väri', 'katkerot', 'energia', 'valikoima', 'pvm', '_id'];
 
 class AlkoLoader {
-
   constructor() {
     console.log('Creating alkoloader');
     this.alkodb = new AlkoDB();
@@ -28,91 +25,84 @@ class AlkoLoader {
   }
 
   getDataForSpecificDay(forDate) {
-    console.log("-----*****----- Db class: " + !!this.alkodb + " DB Ready: " + this.alkodb?this.alkodb.isDBReady():"Not there");
     if (!this.alkodb || !this.alkodb.isDBReady()) {
-      console.log("nope");
+      console.log('Database was not yet ready.');
       return {};
     }
-    var dateString = this.formatDate(forDate);
-    console.log("Trying to load data for date: " + dateString);  
+
+    const dateString = this.formatDate(forDate);
+    console.log(`Trying to load data for date: ${dateString}`);
 
     // var cachedData = JSON.parse(localCache.getItem("alkodata" + dateString));
     return this.alkodb.checkIfCached(forDate).then((dayAlreadyCached) => {
-      console.log("DATABASE WOULD CONTAIN CACHED DATA? ", dayAlreadyCached);
-      
+      console.log('DATABASE WOULD CONTAIN CACHED DATA? ', dayAlreadyCached);
+
       if (dayAlreadyCached) {
         console.log('Using cached data');
         return this.alkodb.checkIfCached(forDate);
-      } else {
-        console.log('No cached data, retrieving from Alko');
-        return this.retrieveData(forDate).then((resultDate) => {
-          console.log("USING DATA FOR: " + resultDate);
-          return this.alkodb.checkIfCached(resultDate);
-        }).then((results) => {
-          return results;
-        });
-      }  
+      }
+      console.log('No cached data, retrieving from Alko');
+      return this.retrieveData(forDate).then((resultDate) => {
+        console.log(`USING DATA FOR: ${resultDate}`);
+        return this.alkodb.checkIfCached(resultDate);
+      }).then((results) => {
+        console.log('Ready to return data sized:', results.length);
+        return results;
+      });
     });
   }
 
   retrieveData(forDate) {
-    var dateString = this.formatDate(forDate);
-    console.log("Loading data for: " + dateString);
-    
-    var fullUrl = urlStart + filenameStart + dateString + fileExtension;
-    console.log("Loading from URL: ", fullUrl);
-    
+    const dateString = this.formatDate(forDate);
+    console.log(`Loading data for: ${dateString}`);
+
+    const fullUrl = urlStart + filenameStart + dateString + fileExtension;
+    console.log('Loading from URL: ', fullUrl);
+
     return fetch(fullUrl)
-    .then(response => response.buffer())
-    .then(async buffer => {
-      var wb = xlsx.read(buffer, {type: "buffer"});
+      .then(response => response.buffer())
+      .then(async (buffer) => {
+        const wb = xlsx.read(buffer, { type: 'buffer' });
 
-      console.log("writing worksheet..", wb.SheetNames);
-      const JSONsheet = JSON.stringify(sheet);
+        console.log(`writing worksheet.. ${wb.SheetNames}`);
 
-      var sheet = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], 
-        {header: alkoHeaders});
+        const sheet = xlsx.utils
+          .sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: alkoHeaders });
 
-      var index = 0;
+        // Only store value if it's part of the actual data and not alko notes or headers
+        const modifiedSheet = sheet.map((productitem) => {
+          if (!Number.isNaN(parseInt(productitem.nro, 10))) {
+            productitem.pvm = this.formatDate(forDate);
+            productitem._id = `${this.formatDate(forDate)}-${productitem.nro}`;
+            return productitem;
+          }
+          return null;
+        }).filter(item => !!item);
 
-      // Only store value if it's part of the actual data and not alko notes or headers
-      var modifiedSheet = sheet.map(item => {
-        if (!Number.isNaN(parseInt(item.nro))) {          
-          item.pvm = this.formatDate(forDate);
-          item._id = this.formatDate(forDate) + "-" + item.nro;
-          return item;
+        if (modifiedSheet && modifiedSheet.length > 0) {
+          console.log('SHEET SIZE: ', modifiedSheet.length);
+          await this.alkodb.storeCache(forDate, 'PROCESSING');
+          await this.alkodb.storeBulk(forDate, modifiedSheet);
+          await this.alkodb.storeCache(forDate, 'DONE');
+        } else {
+          console.log('No sheet!');
         }
-      }).filter(item => {
-        if (item) {
-          return item;
+
+        return forDate;
+      })
+      .catch((error) => {
+        console.log('Error occured', error);
+        console.log('No data for this day on alko\'s servers!');
+        const dayBefore = moment(forDate).subtract(1, 'day');
+        if (dayBefore.isAfter(moment().subtract(4, 'days'))) {
+          return this.getDataForSpecificDay(dayBefore);
         }
-      });
-
-      if (modifiedSheet && modifiedSheet.length > 0) {
-        console.log("SHEET SIZE: ", modifiedSheet.length);
-        let cacheResult = await this.alkodb.storeCache(forDate, 'PROCESSING');
-        let bulkResult = await this.alkodb.storeBulk(forDate, data);
-        let cacheDoneResult = await this.alkodb.storeCache(forDate, 'DONE');       
-      } else {
-        console.log('No sheet!');
-      }
-
-      return forDate;
-    })
-    .catch((error) => {
-      console.log('Error occured', error);
-      console.log("No data for this day on alko's servers!");
-      var dayBefore = moment(forDate).subtract(1, 'day');
-      if (dayBefore.isAfter(moment().subtract(4, 'days'))) {
-        // return this.getDataForSpecificDay(dayBefore);
+        console.log('No data found in the last few days!');
         return new Promise();
-      } else {
-        console.log("No data found in the last few days!");
-      }
-    });
+      });
   }
 
-  formatDate(date) {
+  static formatDate(date) {
     return date.format('DD.MM.YYYY');
   }
 

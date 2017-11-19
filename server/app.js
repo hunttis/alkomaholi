@@ -1,13 +1,11 @@
-'use strict';
-
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const moment = require('moment');
 const fetch = require('node-fetch');
 const Bluebird = require('bluebird');
-
 const AlkoLoader = require('./alkoloader');
+
 const alkoLoader = new AlkoLoader();
 
 fetch.Promise = Bluebird;
@@ -34,7 +32,7 @@ function initializeServer() {
   alkoLoader.getDataForSpecificDay(moment());
 }
 
-app.get('/alldata', function(req, res, next) {
+app.get('/alldata', (req, res) => {
   alkoLoader.getAllDataForDay(moment()).then((result) => {
     console.log('Results are here', result.length);
     res.json(result);
@@ -43,7 +41,7 @@ app.get('/alldata', function(req, res, next) {
   });
 });
 
-app.get('/data', function(req, res, next) {
+app.get('/data', (req, res) => {
   console.log('Request parameters: ', req.query);
 
   const searchTerms = req.query.query || 'dom';
@@ -54,10 +52,10 @@ app.get('/data', function(req, res, next) {
   }).catch((err) => {
     console.log('ERROR IN SEARCH', err);
     res.status(500).json({});
-  })
+  });
 });
 
-app.get('/refreshdata', function(req, res, next) {
+app.get('/refreshdata', (req, res) => {
   initializeServer();
   res.send('Refreshing.. <a href="/">Back to frontpage</a>');
 });
@@ -73,9 +71,9 @@ server.on('listening', onListening);
 function onListening() {
   const addr = server.address();
   const bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  console.log('Listening on ' + bind);
+    ? `pipe ${addr}`
+    : `port ${addr.port}`;
+  console.log(`Listening on ${bind}`);
 }
 
 module.exports = app;
