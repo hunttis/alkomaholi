@@ -44,7 +44,9 @@ app.get('/alldata', (req, res) => {
 app.get('/data', (req, res) => {
   console.log('Request parameters: ', req.query);
 
-  const searchTerms = req.query.query || 'dom';
+  const searchTerms = req.query.query;
+
+  console.log('Searchterms', req.query.query);
 
   alkoLoader.searchData(searchTerms).then((results) => {
     console.log('got results!', results.length);

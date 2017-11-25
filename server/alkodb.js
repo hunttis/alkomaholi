@@ -48,6 +48,7 @@ const Day = mongoose.model('Day', daySchema);
 
 class AlkoDB {
   constructor() {
+    this.activeDate = moment();
     console.log('Mongo set up starting');
 
     if (process.env.LOCAL) {
@@ -74,40 +75,36 @@ class AlkoDB {
   }
 
 
-  static async storeCache(date, status) {
-    let day = await Day.findById({ _id: date.format('DD.MM.YYYY') });
+  async storeCache(date, status) {
+    const dateId = date.format('DD.MM.YYYY');
+
+    let day = await Day.findById({ _id: dateId });
 
     if (!day) {
       console.log('No existing day');
-      day = new Day({ _id: date.format('DD.MM.YYYY'), status });
+      day = new Day({ _id: dateId, status });
     } else {
       console.log('Existing day, just setting status', day);
       day.status = status;
     }
 
-    day.save().then((result) => {
-      console.log('Day Status saved', day, !!result);
-    }).catch((err) => {
-      console.log('Failed to save day status', day, err);
-    });
+    await day.save();
+    console.log('Saved day status!', status);
   }
 
-  static storeBulk(date, data) {
+  storeBulk(date, data) {
     console.log('Bulk operation starting..');
-    Product.collection.insert(data).then((result) => {
-      console.log('Saved', data.length, 'products successfully!', result.length);
+    return Product.collection.insert(data).then(() => {
+      console.log('Saved', data.length, 'products successfully!');
     }).catch((err) => {
       console.log('Something went wrong with the product bulk operation', err);
     });
   }
 
-  static isDBReady() {
-    return !!mongoose;
-  }
-
-  static getDay(date) {
-    console.log('Trying to find day: ', date.format('DD.MM.YYYY'));
-    return Day.findById({ _id: date.format('DD.MM.YYYY') });
+  getDay(date) {
+    const searchDate = moment(date).format('DD.MM.YYYY');
+    console.log('Trying to find day: ', searchDate);
+    return Day.findById({ _id: searchDate });
   }
 
   checkIfCached(date) {
@@ -124,7 +121,12 @@ class AlkoDB {
     });
   }
 
-  static getDataForDay(date) {
+  setActiveDate(useDate) {
+    console.log('USING DATE:', useDate);
+    this.activeDate = useDate;
+  }
+
+  getDataForDay(date) {
     const dateQuery = date.format('DD.MM.YYYY');
     return Product.find({ pvm: dateQuery }).then((result) => {
       console.log('Result size: ', result.length);
@@ -140,50 +142,16 @@ class AlkoDB {
     const needles = searchTerms.split(/\W/);
     console.log('needles', needles);
 
-    const searches = needles.map(async (term) => {
-      console.log('searching..', term);
-      return this.searchFromDB(term);
-    });
-
-    return Promise.all(searches).then((results) => {
-      // console.log(results);
-      const final = results.map((list) => {
-        console.log('List length:', list.length);
-
-        const matchedItems = [];
-
-        list.forEach((item) => {
-          let itemOnEachList = true;
-          results.forEach((listToCheck) => {
-            let itemOnList = false;
-            listToCheck.forEach((itemToCompareTo) => {
-              if (itemToCompareTo.nro === item.nro) {
-                itemOnList = true;
-              }
-            });
-            if (!itemOnList) {
-              itemOnEachList = false;
-            }
-          });
-          if (itemOnEachList) {
-            matchedItems.push(item);
-          }
-        });
-        return matchedItems;
-      });
-
-      const finalResult = _.uniq(_.flatten(final), item => item.nro);
-      console.log('Final result new way: ', finalResult.length);
-
-      return finalResult;
-    });
+    return this.searchFromDB(needles);
   }
 
-  static searchFromDB(searchTerm) {
-    console.log('SEARCHING DB FOR', searchTerm);
-    const dateQuery = moment().format('DD.MM.YYYY');
-    const regex = new RegExp(`.*${searchTerm}.*`, 'i');
-
+  searchFromDB(searchTerms) {
+    console.log('SEARCHING DB FOR', searchTerms);
+    const dateQuery = this.activeDate.format('DD.MM.YYYY');
+    const searchTermsString = searchTerms.join('|');
+    const regex = new RegExp(`.*(${searchTermsString}).*`, 'i');
+    console.log('Searching mongo with', regex);
+    mongoose.set('debug', true);
     return Product.find({ pvm: dateQuery }).or([
       { nimi: regex },
       { valmistaja: regex },

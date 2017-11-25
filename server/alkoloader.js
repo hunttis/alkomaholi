@@ -25,7 +25,7 @@ class AlkoLoader {
   }
 
   getDataForSpecificDay(forDate) {
-    if (!this.alkodb || !this.alkodb.isDBReady()) {
+    if (!this.alkodb) {
       console.log('Database was not yet ready.');
       return {};
     }
@@ -39,14 +39,16 @@ class AlkoLoader {
 
       if (dayAlreadyCached) {
         console.log('Using cached data');
-        return this.alkodb.checkIfCached(forDate);
+        this.alkodb.setActiveDate(forDate);
+        return this.alkodb.checkIfCached(forDate) ? forDate : false;
       }
       console.log('No cached data, retrieving from Alko');
       return this.retrieveData(forDate).then((resultDate) => {
         console.log(`USING DATA FOR: ${resultDate}`);
-        return this.alkodb.checkIfCached(resultDate);
+        this.alkodb.setActiveDate(resultDate);
+        return this.alkodb.checkIfCached(resultDate) ? resultDate : false;
       }).then((results) => {
-        console.log('Ready to return data sized:', results.length);
+        console.log('Ready to return data:', results);
         return results;
       });
     });
@@ -88,13 +90,17 @@ class AlkoLoader {
           console.log('No sheet!');
         }
 
-        return forDate;
+        return this.formatDate(forDate);
       })
       .catch((error) => {
-        console.log('Error occured', error);
-        console.log('No data for this day on alko\'s servers!');
+        if (error.toString().includes('could not find <table>')) {
+          console.log(`No data for ${forDate} day on alko's servers!`);
+        } else {
+          console.log('Error occured', error);
+        }
         const dayBefore = moment(forDate).subtract(1, 'day');
         if (dayBefore.isAfter(moment().subtract(4, 'days'))) {
+          console.log('Trying to find data for previous day', this.formatDate(dayBefore));
           return this.getDataForSpecificDay(dayBefore);
         }
         console.log('No data found in the last few days!');
@@ -102,7 +108,7 @@ class AlkoLoader {
       });
   }
 
-  static formatDate(date) {
+  formatDate(date) {
     return date.format('DD.MM.YYYY');
   }
 
