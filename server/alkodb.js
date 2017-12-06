@@ -150,7 +150,6 @@ class AlkoDB {
     const dateQuery = this.activeDate.format('DD.MM.YYYY');
     const orQuery = this.orQueries(searchTerms);
     console.log('Searching mongo with', orQuery);
-    mongoose.set('debug', true);
     return Product.find({ pvm: dateQuery, $and: orQuery });
   }
 
