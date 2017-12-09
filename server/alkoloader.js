@@ -90,7 +90,7 @@ class AlkoLoader {
           console.log('No sheet!');
         }
 
-        return this.formatDate(forDate);
+        return forDate;
       })
       .catch((error) => {
         if (error.toString().includes('could not find <table>')) {

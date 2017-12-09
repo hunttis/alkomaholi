@@ -4,7 +4,7 @@ import './App.css';
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {alkodata: [{nimi: 'Odota'}], searchResults: [], searchTerms: "", typing: false, typingTimeout: 0}
+    this.state = {alkodata: [{nimi: 'Odota'}], searchResults: [], searchTerms: "", typing: false, typingTimeout: 0, searching: false}
     this.handleChange = this.handleChange.bind(this);
     this.searchData = this.searchData.bind(this);
   }
@@ -18,11 +18,13 @@ class App extends Component {
     console.log('Calling url', url);
     console.log('Should be searching with "', searchTerms,'"');
 
+    this.setState({searching: true});
+
     fetch(url)
     .then(res => res.json())
     .then(json => {
       console.log("Got alko data!", json);
-      this.setState({alkodata: json});
+      this.setState({searching: false, alkodata: json});
     })
   }
 
@@ -45,7 +47,26 @@ class App extends Component {
 
   }
 
+  tableContents() {
+    if (this.state.searching) {
+      return <tr>Etsitään...</tr>
+    } else {
+      return this.state.alkodata.map(item => {
+        return <tr key={item.nimi + item.nro}>
+            <td>{item.nimi}</td>
+            <td>{item.tyyppi}</td>
+            <td>{item.hinta}</td>
+            <td>{item.litrahinta}</td>
+            <td>{item['alkoholi-%']}</td>
+          </tr>
+      })
+    }
+  }
+
   render() {
+
+    let tableContents = this.tableContents();
+
     return (
       <div className="App">
         <h1>AlkoAPI</h1>
@@ -61,17 +82,7 @@ class App extends Component {
           <th>%</th>
           </thead>
           <tbody>
-          {
-            this.state.alkodata.map(item => {
-              return <tr key={item.nimi + item.nro}>
-                  <td>{item.nimi}</td>
-                  <td>{item.tyyppi}</td>
-                  <td>{item.hinta}</td>
-                  <td>{item.litrahinta}</td>
-                  <td>{item['alkoholi-%']}</td>
-                </tr>
-            })
-          }
+          {tableContents}
           </tbody></table>
         </div>
       </div>
