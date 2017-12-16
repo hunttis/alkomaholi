@@ -53,11 +53,12 @@ class App extends Component {
     } else {
       return this.state.alkodata.map(item => {
         return <tr key={item.nimi + item.nro}>
-            <td>{item.nimi}</td>
-            <td>{item.tyyppi}</td>
-            <td>{item.hinta}</td>
-            <td>{item.litrahinta}</td>
-            <td>{item['alkoholi-%']}</td>
+            <td className="nimi">{item.nimi}</td>
+            <td className="numerosarake tyyppi">{item.tyyppi}</td>
+            <td className="numerosarake hinta">{item.hinta}</td>
+            <td className="numerosarake litrahinta">{item.litrahinta}</td>
+            <td className="numerosarake pullokoko">{item.pullokoko}</td>
+            <td className="numerosarake alkoholi">{item['alkoholi-%']}</td>
           </tr>
       })
     }
@@ -76,10 +77,11 @@ class App extends Component {
         <div><table className="resultstable">
           <thead>
           <th>Nimi</th>
-          <th>Tyyppi</th>
-          <th>€</th>
-          <th>€/l</th>
-          <th>%</th>
+          <th className="numerosarake">Tyyppi</th>
+          <th className="numerosarake hinta">€</th>
+          <th className="numerosarake">€/l</th>
+          <th className="numerosarake">Koko</th>
+          <th className="numerosarake">%</th>
           </thead>
           <tbody>
           {tableContents}

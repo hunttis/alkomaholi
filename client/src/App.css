@@ -19,7 +19,14 @@ thead {
   background: #d3b1ff
 }
 
+.numerosarake {
+  text-align: right;
+}
+
 tr:nth-child(even) {background: #CCC}
+
+tr:nth-child(even) td:nth-child(3) {background: #BBB}
+tr:nth-child(odd) td:nth-child(3) {background: #DDD}
 
 select, textarea, input[type="text"], 
 input[type="password"], input[type="datetime"], 
@@ -28,4 +35,5 @@ input[type="month"], input[type="time"], input[type="week"],
 input[type="number"], input[type="email"], input[type="url"], 
 input[type="search"], input[type="tel"], input[type="color"] {
    font-size: 16px; 
-  }
+}
+
