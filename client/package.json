@@ -19,6 +19,7 @@
   },
   "scripts": {
     "dev": "nodemon --exec \"yarn build && rm -rf ../public && mkdir ../public && cp -R build/ ../public/\"",
+    "buildandcopy": "npm run build && rm -rf ../public && mkdir ../public && cp -R build/ ../public/",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
