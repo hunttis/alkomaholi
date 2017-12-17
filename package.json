@@ -9,7 +9,8 @@
   "scripts": {
     "dev": "LOCAL=true nodemon --exec npm start",
     "lint": "eslint .",
-    "start": "node ./server/app.js"
+    "start": "node ./server/app.js",
+    "build-client": "cd client && npm install && npm run buildandcopy"
   },
   "dependencies": {
     "bluebird": "^3.5.1",
