@@ -14,7 +14,7 @@ class App extends Component {
   }
 
   searchData(searchTerms) {
-    const url = '/data?query=' + searchTerms;
+    const url = '/api/data?query=' + searchTerms;
     console.log('Calling url', url);
     console.log('Should be searching with "', searchTerms,'"');
 
