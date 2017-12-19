@@ -35,7 +35,6 @@ function initializeServer() {
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(`${__dirname}/../client/build`));
-  app.use(/^\/(?!api).*/, express.static(`${__dirname}/../client/build`));
 } else {
   app.use(/^\/(?!api).*/, proxy({ target: 'http://localhost:3000', changeOrigin: false }));
 }
