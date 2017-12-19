@@ -14,12 +14,10 @@
     "eslint-plugin-flowtype": "^2.39.1",
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-jsx-a11y": "^5.1.1",
-    "eslint-plugin-react": "^7.5.1",
-    "nodemon": "^1.12.1"
+    "eslint-plugin-react": "^7.5.1"
   },
   "scripts": {
-    "dev": "nodemon --exec \"yarn build && rm -rf ../public && mkdir ../public && cp -R build/ ../public/\"",
-    "buildandcopy": "npm run build && rm -rf ../public && mkdir ../public && cp -R build/ ../public/",
+    "dev": "npm run start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",

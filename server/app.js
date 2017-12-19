@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
+const proxy = require('http-proxy-middleware');
 const moment = require('moment');
 const fetch = require('node-fetch');
 const Bluebird = require('bluebird');
@@ -32,7 +33,13 @@ function initializeServer() {
   alkoLoader.getDataForSpecificDay(moment());
 }
 
-app.get('/alldata', (req, res) => {
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(`${__dirname}/../client/build`));
+  app.use(/^\/(?!api).*/, express.static(`${__dirname}/../client/build`));
+} else {
+  app.use(/^\/(?!api).*/, proxy({ target: 'http://localhost:3000', changeOrigin: false }));
+}
+
 app.get('/api/alldata', (req, res) => {
   alkoLoader.getAllDataForDay(moment()).then((result) => {
     console.log('Results are here', result.length);
@@ -62,8 +69,6 @@ app.get('/api/refreshdata', (req, res) => {
   initializeServer();
   res.send('Refreshing.. <a href="/">Back to frontpage</a>');
 });
-
-app.use(express.static('public'));
 
 const port = process.env.PORT || 8080;
 app.set('port', port);
