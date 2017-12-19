@@ -33,6 +33,7 @@ function initializeServer() {
 }
 
 app.get('/alldata', (req, res) => {
+app.get('/api/alldata', (req, res) => {
   alkoLoader.getAllDataForDay(moment()).then((result) => {
     console.log('Results are here', result.length);
     res.json(result);
@@ -41,7 +42,7 @@ app.get('/alldata', (req, res) => {
   });
 });
 
-app.get('/data', (req, res) => {
+app.get('/api/data', (req, res) => {
   console.log('Request parameters: ', req.query);
 
   const searchTerms = req.query.query;
@@ -57,7 +58,7 @@ app.get('/data', (req, res) => {
   });
 });
 
-app.get('/refreshdata', (req, res) => {
+app.get('/api/refreshdata', (req, res) => {
   initializeServer();
   res.send('Refreshing.. <a href="/">Back to frontpage</a>');
 });
