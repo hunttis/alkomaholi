@@ -1,5 +1,4 @@
 const moment = require('moment');
-const _ = require('underscore');
 const mongoose = require('mongoose');
 
 mongoose.Promise = require('bluebird');

@@ -49,12 +49,11 @@ class App extends Component {
 
   tableContents() {
     if (this.state.searching) {
-      return <tr>Etsitään...</tr>
+      return <tr><td>Etsitään...</td></tr>
     } else {
       return this.state.alkodata.map(item => {
         return <tr key={item.nimi + item.nro}>
             <td className="nimi">{item.nimi}</td>
-            <td className="numerosarake tyyppi">{item.tyyppi}</td>
             <td className="numerosarake hinta">{item.hinta}</td>
             <td className="numerosarake litrahinta">{item.litrahinta}</td>
             <td className="numerosarake pullokoko">{item.pullokoko}</td>
@@ -76,12 +75,13 @@ class App extends Component {
         </div>
         <div><table className="resultstable">
           <thead>
-          <th>Nimi</th>
-          <th className="numerosarake">Tyyppi</th>
-          <th className="numerosarake hinta">€</th>
-          <th className="numerosarake">€/l</th>
-          <th className="numerosarake">Koko</th>
-          <th className="numerosarake">%</th>
+            <tr>
+              <th>Nimi</th>
+              <th className="numerosarake hinta">€</th>
+              <th className="numerosarake">€/l</th>
+              <th className="numerosarake">Koko</th>
+              <th className="numerosarake">%</th>
+            </tr>
           </thead>
           <tbody>
           {tableContents}
