@@ -1,7 +1,8 @@
 module.exports = {
   "extends": "airbnb",
   "plugins": [
-      "react"
+      "react",
+      "jest"
   ],
   "rules": {
     "no-use-before-define": [1, "nofunc"],
@@ -9,5 +10,9 @@ module.exports = {
     "no-underscore-dangle": ["error", { "allow": ["_id"] }],
     "no-console": 0,
     "class-methods-use-this": 0
+  },
+  "env": {
+    "jest/globals": true
   }
+  
 };
