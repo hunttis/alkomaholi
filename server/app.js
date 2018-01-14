@@ -50,9 +50,7 @@ app.get('/api/alldata', (req, res) => {
 
 app.get('/api/data', (req, res) => {
   console.log('Request parameters: ', req.query);
-
   const searchTerms = req.query.query;
-
   console.log('Searchterms', req.query.query);
 
   alkoLoader.searchData(searchTerms).then((results) => {

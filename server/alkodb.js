@@ -65,8 +65,15 @@ class AlkoDB {
       mongoURL = process.env.MONGO_URL;
     }
 
+    this.connectTomongo(mongoURL);
+  }
 
-    mongoose.connect(mongoURL).then(() => {
+  connectTomongo(mongoURL) {
+    mongoose.connect(mongoURL, {
+      keepAlive: true,
+      reconnectTries: 10,
+      useMongoClient: true,
+    }).then(() => {
       console.log('Connected to Mongo!');
     }).catch((err) => {
       console.log('Error occured upon mongo connection!', err);
