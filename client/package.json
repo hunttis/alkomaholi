@@ -14,7 +14,8 @@
     "eslint-plugin-flowtype": "^2.41.0",
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
-    "eslint-plugin-react": "^7.5.1"
+    "eslint-plugin-react": "^7.5.1",
+    "webpack": "^3.10.0"
   },
   "scripts": {
     "start": "react-scripts start",
