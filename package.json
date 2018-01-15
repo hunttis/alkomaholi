@@ -8,12 +8,12 @@
   },
   "scripts": {
     "testprod": "NODE_ENV=production MONGO_URL=mongodb://localhost:27017 npm start",
-    "dev": "LOCAL=true nodemon --exec npm start",
+    "dev": "MONGO_URL=mongodb://localhost:27017 nodemon --exec npm start",
     "lint": "eslint .",
     "start": "node ./server/app.js",
     "build-client": "cd client && npm install && npm run build",
-    "test": "jest",
-    "test-watch": "jest --watch"
+    "test": "MONGO_URL=mongodb://localhost:27017 jest",
+    "test-watch": "MONGO_URL=mongodb://localhost:27017 ENVIRONMENT=local jest --watch"
   },
   "dependencies": {
     "bluebird": "^3.5.1",

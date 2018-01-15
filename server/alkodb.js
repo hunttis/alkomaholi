@@ -1,5 +1,6 @@
 const moment = require('moment');
 const mongoose = require('mongoose');
+const configuration = require('./config/configloader');
 
 mongoose.Promise = require('bluebird');
 
@@ -50,22 +51,7 @@ class AlkoDB {
     this.activeDate = moment();
     console.log('Mongo set up starting');
 
-    if (process.env.LOCAL) {
-      console.log('RUNNING LOCAL ENV!!');
-    } else {
-      console.log('NOT RUNNING LOCAL!!!');
-    }
-
-    let mongoURL;
-    if (process.env.LOCAL) {
-      console.log('Using local opts');
-      mongoURL = 'mongodb://localhost:27017';
-    } else {
-      console.log('Using remote opts');
-      mongoURL = process.env.MONGO_URL;
-    }
-
-    this.connectTomongo(mongoURL);
+    this.connectTomongo(configuration.mongoURL);
   }
 
   connectTomongo(mongoURL) {

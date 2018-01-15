@@ -4,27 +4,13 @@ const xlsx = require('xlsx');
 const AlkoDB = require('./alkodb');
 const Bluebird = require('bluebird');
 
-fetch.Promise = Bluebird;
+const configuration = require('./config/configloader');
 
-const urlStart = 'https://www.alko.fi/INTERSHOP/static/WFS/Alko-OnlineShop-Site/-/Alko-OnlineShop/fi_FI/Alkon%20Hinnasto%20Tekstitiedostona/';
-// const urlStart = "http://localhost:8080/";
-const filenameStart = 'alkon-hinnasto-tekstitiedostona';
-const fileExtension = '.xls';
-const alkoHeaders = ['nro', 'nimi', 'valmistaja', 'pullokoko', 'hinta', 'litrahinta',
-  'uutuus', 'hinnastojärjestys', 'tyyppi', 'erityisryhmä', 'oluttyyppi',
-  'valmistusmaa', 'alue', 'vuosikerta', 'etikettimerkintöjä', 'huomautus',
-  'rypäleet', 'luonnehdinta', 'pakkaustyyppi', 'suljentatyyppi', 'alkoholi-%',
-  'hapot g/l', 'sokeri g/l', 'kantavierrep-%', 'väri', 'katkerot', 'energia', 'valikoima', 'pvm', '_id'];
+fetch.Promise = Bluebird;
 
 class AlkoLoader {
   constructor(alkodb) {
-    if (alkodb) {
-      console.log('Creating alkoloader using given AlkoDB');
-      this.alkodb = alkodb;
-    } else {
-      console.log('Creating alkoloader using actual DB');
-      this.alkodb = new AlkoDB();
-    }
+    this.alkodb = alkodb || new AlkoDB();
   }
 
   getDataForSpecificDay(forDate) {
@@ -36,51 +22,40 @@ class AlkoLoader {
     const dateString = this.formatDate(forDate);
     console.log(`Trying to load data for date: ${dateString}`);
 
-    return this.alkodb.checkIfCached(forDate).then((dayAlreadyCached) => {
-      console.log('DATABASE WOULD CONTAIN CACHED DATA? ', dayAlreadyCached);
-
-      if (dayAlreadyCached) {
-        console.log('Using cached data');
-        this.alkodb.setActiveDate(forDate);
-        return this.alkodb.checkIfCached(forDate) ? forDate : false;
-      }
-      console.log('No cached data, retrieving from Alko');
-      return this.retrieveData(forDate).then((resultDate) => {
-        console.log(`USING DATA FOR: ${resultDate}`);
-        this.alkodb.setActiveDate(resultDate);
-        return this.alkodb.checkIfCached(resultDate) ? resultDate : false;
-      }).then((results) => {
-        console.log('Ready to return data:', results);
-        return results;
+    return this.alkodb.checkIfCached(forDate)
+      .then((dayAlreadyCached) => {
+        if (dayAlreadyCached) {
+          console.log('Using cached data');
+          this.alkodb.setActiveDate(forDate);
+          return this.alkodb.checkIfCached(forDate) ? forDate : false;
+        }
+        console.log('No cached data, retrieving from Alko');
+        return this.retrieveData(forDate).then((resultDate) => {
+          console.log(`USING DATA FOR: ${resultDate}`);
+          this.alkodb.setActiveDate(resultDate);
+          return this.alkodb.checkIfCached(resultDate) ? resultDate : false;
+        }).then((results) => {
+          console.log('Ready to return data:', results);
+          return results;
+        });
       });
-    });
   }
 
   retrieveData(forDate) {
     const dateString = this.formatDate(forDate);
     console.log(`Loading data for: ${dateString}`);
 
-    const fullUrl = urlStart + filenameStart + dateString + fileExtension;
+    const fullUrl = configuration.urlStart +
+        configuration.filenameStart +
+        dateString +
+        configuration.fileExtension;
+
     console.log('Loading from URL: ', fullUrl);
 
     return fetch(fullUrl)
       .then(response => response.buffer())
       .then(async buffer => this.parseSheet(buffer, forDate))
-      .then(async modifiedSheet => this.storeSheetInDb(modifiedSheet, forDate))
-      .catch((error) => {
-        if (error.toString().includes('could not find <table>')) {
-          console.log(`No data for ${forDate} day on alko's servers!`);
-        } else {
-          console.log('Error occured', error);
-        }
-        const dayBefore = moment(forDate).subtract(1, 'day');
-        if (dayBefore.isAfter(moment().subtract(4, 'days'))) {
-          console.log('Trying to find data for previous day', this.formatDate(dayBefore));
-          return this.getDataForSpecificDay(dayBefore);
-        }
-        console.log('No data found in the last few days!');
-        return new Promise();
-      });
+      .then(async modifiedSheet => this.storeSheetInDb(modifiedSheet, forDate));
   }
 
   parseSheet(buffer, forDate) {
@@ -89,7 +64,7 @@ class AlkoLoader {
     console.log(`writing worksheet.. ${wb.SheetNames}`);
 
     const sheet = xlsx.utils
-      .sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: alkoHeaders });
+      .sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: configuration.alkoHeaders });
 
     // Only store value if it's part of the actual data and not alko notes or headers
     const modifiedSheet = sheet.map((productitem) => {

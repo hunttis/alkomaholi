@@ -28,7 +28,6 @@ function setServerRefresh() {
   }, 3600000);
 }
 
-
 function initializeServer() {
   alkoLoader.getDataForSpecificDay(moment());
 }
