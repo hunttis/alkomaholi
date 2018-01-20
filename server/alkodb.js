@@ -4,6 +4,13 @@ const configuration = require('./config/configloader');
 
 mongoose.Promise = require('bluebird');
 
+const historiaSchema = mongoose.Schema({
+  pvm: String,
+  hinta: String,
+});
+
+const Historia = mongoose.model('Historia', historiaSchema); // eslint-disable-line no-unused-vars
+
 const productSchema = mongoose.Schema({
   nro: String,
   nimi: String,
@@ -35,6 +42,7 @@ const productSchema = mongoose.Schema({
   valikoima: String,
   pvm: String,
   _id: String,
+  historia: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Historia' }],
 });
 
 const Product = mongoose.model('Product', productSchema);
@@ -84,13 +92,36 @@ class AlkoDB {
     console.log('Saved day status!', status);
   }
 
-  storeBulk(date, data) {
-    console.log('Bulk operation starting..');
-    return Product.collection.insert(data).then(() => {
-      console.log('Saved', data.length, 'products successfully!');
-    }).catch((err) => {
-      console.log('Something went wrong with the product bulk operation', err);
-    });
+  async storeBulk(date, data) {
+    console.log('Bulk operation starting --->');
+
+    try {
+      const bulk = Product.collection.initializeOrderedBulkOp();
+
+      data.forEach((item) => {
+        const pvmString = item.pvm;
+        item._id = item.nro;
+
+        bulk.find({
+          _id: item._id,
+        }).upsert().updateOne({
+          $setOnInsert: item,
+          $push: { historia: { pvm: pvmString, hinta: item.hinta } },
+        });
+
+        // Update root object price to newest every time, cannot be done above,
+        // because mongo doesn't allow setOnInsert and set on same field
+        bulk.find({
+          _id: item._id,
+        }).updateOne({
+          $set: { hinta: item.hinta },
+        });
+      });
+      await bulk.execute();
+      console.log('<--- Bulk operation complete!');
+    } catch (err) {
+      console.log('Something went wrong with the history object store', err);
+    }
   }
 
   getDay(date) {

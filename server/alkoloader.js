@@ -1,5 +1,4 @@
 const fetch = require('node-fetch');
-const moment = require('moment');
 const xlsx = require('xlsx');
 const AlkoDB = require('./alkodb');
 const Bluebird = require('bluebird');
@@ -13,7 +12,7 @@ class AlkoLoader {
     this.alkodb = alkodb || new AlkoDB();
   }
 
-  getDataForSpecificDay(forDate) {
+  async getDataForSpecificDay(forDate) {
     if (!this.alkodb) {
       console.log('Database was not yet ready.');
       return {};
@@ -22,46 +21,59 @@ class AlkoLoader {
     const dateString = this.formatDate(forDate);
     console.log(`Trying to load data for date: ${dateString}`);
 
-    return this.alkodb.checkIfCached(forDate)
-      .then((dayAlreadyCached) => {
-        if (dayAlreadyCached) {
-          console.log('Using cached data');
-          this.alkodb.setActiveDate(forDate);
-          return this.alkodb.checkIfCached(forDate) ? forDate : false;
-        }
-        console.log('No cached data, retrieving from Alko');
-        return this.retrieveData(forDate).then((resultDate) => {
-          console.log(`USING DATA FOR: ${resultDate}`);
-          this.alkodb.setActiveDate(resultDate);
-          return this.alkodb.checkIfCached(resultDate) ? resultDate : false;
-        }).then((results) => {
-          console.log('Ready to return data:', results);
-          return results;
-        });
-      });
+    const dayAlreadyCached = await this.alkodb.checkIfCached(forDate);
+    console.log('Data for', this.formatDate(forDate), 'already cached:', dayAlreadyCached);
+
+    if (dayAlreadyCached) {
+      this.alkodb.setActiveDate(forDate);
+      return true;
+    }
+
+    const retrieveResult = await this.retrieveData(forDate);
+    console.log('Attempted to retrieve data from ALKO servers for: ', this.formatDate(forDate), ' - Result was: ', retrieveResult);
+    return retrieveResult;
+
+    // .then((dayAlreadyCached) => {
+    //   if (dayAlreadyCached) {
+    //     console.log('Using cached data');
+    //     this.alkodb.setActiveDate(forDate);
+    //     return this.alkodb.checkIfCached(forDate) ? forDate : false;
+    //   }
+    //   console.log('No cached data, retrieving from Alko');
+    //   return this.retrieveData(forDate).then((resultDate) => {
+    //     console.log(`USING DATA FOR: ${resultDate}`);
+    //     this.alkodb.setActiveDate(resultDate);
+    //     return this.alkodb.checkIfCached(resultDate) ? resultDate : false;
+    //   }).then((results) => {
+    //     console.log('Ready to return data:', results);
+    //     return results;
+    //   });
+    // });
   }
 
   retrieveData(forDate) {
     const dateString = this.formatDate(forDate);
     console.log(`Loading data for: ${dateString}`);
 
-    const fullUrl = configuration.urlStart +
-        configuration.filenameStart +
-        dateString +
-        configuration.fileExtension;
+    const fullUrl = configuration.urlStart + configuration.filenameStart +
+        dateString + configuration.fileExtension;
 
     console.log('Loading from URL: ', fullUrl);
 
     return fetch(fullUrl)
       .then(response => response.buffer())
       .then(async buffer => this.parseSheet(buffer, forDate))
-      .then(async modifiedSheet => this.storeSheetInDb(modifiedSheet, forDate));
+      .then(async modifiedSheet => this.storeSheetInDb(modifiedSheet, forDate))
+      .catch((err) => {
+        console.log('Error with fetching the data: ', err);
+        return false;
+      });
   }
 
   parseSheet(buffer, forDate) {
     const wb = xlsx.read(buffer, { type: 'buffer' });
 
-    console.log(`writing worksheet.. ${wb.SheetNames}`);
+    console.log(`Writing worksheet: '${wb.SheetNames}'`);
 
     const sheet = xlsx.utils
       .sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: configuration.alkoHeaders });
@@ -75,21 +87,26 @@ class AlkoLoader {
       }
       return null;
     }).filter(item => !!item);
-    
+
     return modifiedSheet;
   }
 
   async storeSheetInDb(sheet, forDate) {
     if (sheet && sheet.length > 0) {
       console.log('SHEET SIZE: ', sheet.length);
-      await this.alkodb.storeCache(forDate, 'PROCESSING');
-      await this.alkodb.storeBulk(forDate, sheet);
-      await this.alkodb.storeCache(forDate, 'DONE');
+      try {
+        await this.alkodb.storeCache(forDate, 'PROCESSING');
+        await this.alkodb.storeBulk(forDate, sheet);
+        await this.alkodb.storeCache(forDate, 'DONE');
+      } catch (err) {
+        console.log('Error storing data to DB:', err);
+        return false;
+      }
     } else {
       console.log('No sheet!');
     }
 
-    return forDate;
+    return true;
   }
 
   formatDate(date) {
