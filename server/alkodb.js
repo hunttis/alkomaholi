@@ -4,55 +4,9 @@ const configuration = require('./config/configloader');
 
 mongoose.Promise = require('bluebird');
 
-const historiaSchema = mongoose.Schema({
-  pvm: String,
-  hinta: String,
-});
-
-const Historia = mongoose.model('Historia', historiaSchema); // eslint-disable-line no-unused-vars
-
-const productSchema = mongoose.Schema({
-  nro: String,
-  nimi: String,
-  valmistaja: String,
-  pullokoko: String,
-  hinta: String,
-  litrahinta: String,
-  uutuus: String,
-  hinnastojärjestys: String,
-  tyyppi: String,
-  erityisryhmä: String,
-  oluttyyppi: String,
-  valmistusmaa: String,
-  alue: String,
-  vuosikerta: String,
-  etikettimerkintöjä: String,
-  huomautus: String,
-  rypäleet: String,
-  luonnehdinta: String,
-  pakkaustyyppi: String,
-  suljentatyyppi: String,
-  'alkoholi-%': String,
-  'hapot g/l': String,
-  'sokeri g/l': String,
-  'kantavierrep-%': String,
-  väri: String,
-  katkerot: String,
-  energia: String,
-  valikoima: String,
-  pvm: String,
-  _id: String,
-  historia: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Historia' }],
-});
-
-const Product = mongoose.model('Product', productSchema);
-
-const daySchema = mongoose.Schema({
-  _id: String,
-  status: String,
-});
-
-const Day = mongoose.model('Day', daySchema);
+const Historia = require('./models/Historia');
+const Product = require('./models/Product');
+const Day = require('./models/Day');
 
 class AlkoDB {
   constructor() {
@@ -92,7 +46,7 @@ class AlkoDB {
     console.log('Saved day status!', status);
   }
 
-  async storeBulk(date, data) {
+  async storeBulk(data) {
     console.log('Bulk operation starting --->');
 
     try {

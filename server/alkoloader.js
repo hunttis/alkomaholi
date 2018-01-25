@@ -55,8 +55,7 @@ class AlkoLoader {
     const dateString = this.formatDate(forDate);
     console.log(`Loading data for: ${dateString}`);
 
-    const fullUrl = configuration.urlStart + configuration.filenameStart +
-        dateString + configuration.fileExtension;
+    const fullUrl = configuration.urlStart + configuration.filenameStart + configuration.fileExtension;
 
     console.log('Loading from URL: ', fullUrl);
 
@@ -95,8 +94,7 @@ class AlkoLoader {
     if (sheet && sheet.length > 0) {
       console.log('SHEET SIZE: ', sheet.length);
       try {
-        await this.alkodb.storeCache(forDate, 'PROCESSING');
-        await this.alkodb.storeBulk(forDate, sheet);
+        await this.alkodb.storeBulk(sheet);
         await this.alkodb.storeCache(forDate, 'DONE');
       } catch (err) {
         console.log('Error storing data to DB:', err);
