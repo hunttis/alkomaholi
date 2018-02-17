@@ -124,16 +124,18 @@ class AlkoDB {
 
   searchFromDB(searchTerms) {
     console.log('SEARCHING DB FOR', searchTerms);
-    const dateQuery = this.activeDate.format('DD.MM.YYYY');
     const orQuery = this.orQueries(searchTerms);
-    console.log('Searching mongo with', orQuery);
-    return Product.find({ pvm: dateQuery, $and: orQuery });
+    mongoose.set('debug', true);
+
+    console.log('Searching mongo with', JSON.stringify(orQuery));
+    return Product.find({ $and: orQuery });
   }
 
   orQueries(searchTerms) {
     const query = [];
     searchTerms.forEach((term) => {
-      const regex = new RegExp(`.*(${term}).*`, 'i');
+      const regex = new RegExp(`${term}`, 'i');
+      console.log('Regex: ', regex);
       const orQuery = {
         $or: [{ nimi: regex },
           { valmistaja: regex },
@@ -142,6 +144,7 @@ class AlkoDB {
         ],
       };
       query.push(orQuery);
+      console.log('orQuery', orQuery);
     });
     return query;
   }

@@ -5,3 +5,12 @@ services:
     image: mongo:3.4
     ports:
       - 27017:27017
+  alkomaholi:
+    build: .
+    links:
+      - mongodb
+    ports:
+      - 8080:8080
+    environment: 
+      - MONGO_URL=mongodb://mongodb
+      - NODE_ENV=production
