@@ -1,72 +1,26 @@
 const moment = require('moment');
 const mongoose = require('mongoose');
+const configuration = require('./config/configloader');
 
 mongoose.Promise = require('bluebird');
 
-const productSchema = mongoose.Schema({
-  nro: String,
-  nimi: String,
-  valmistaja: String,
-  pullokoko: String,
-  hinta: String,
-  litrahinta: String,
-  uutuus: String,
-  hinnastojärjestys: String,
-  tyyppi: String,
-  erityisryhmä: String,
-  oluttyyppi: String,
-  valmistusmaa: String,
-  alue: String,
-  vuosikerta: String,
-  etikettimerkintöjä: String,
-  huomautus: String,
-  rypäleet: String,
-  luonnehdinta: String,
-  pakkaustyyppi: String,
-  suljentatyyppi: String,
-  'alkoholi-%': String,
-  'hapot g/l': String,
-  'sokeri g/l': String,
-  'kantavierrep-%': String,
-  väri: String,
-  katkerot: String,
-  energia: String,
-  valikoima: String,
-  pvm: String,
-  _id: String,
-});
-
-const Product = mongoose.model('Product', productSchema);
-
-const daySchema = mongoose.Schema({
-  _id: String,
-  status: String,
-});
-
-const Day = mongoose.model('Day', daySchema);
+const Product = require('./models/Product');
+const Day = require('./models/Day');
 
 class AlkoDB {
   constructor() {
     this.activeDate = moment();
     console.log('Mongo set up starting');
 
-    if (process.env.LOCAL) {
-      console.log('RUNNING LOCAL ENV!!');
-    } else {
-      console.log('NOT RUNNING LOCAL!!!');
-    }
+    this.connectTomongo(configuration.mongoURL);
+  }
 
-    let mongoURL;
-    if (process.env.LOCAL) {
-      console.log('Using local opts');
-      mongoURL = 'mongodb://localhost:27017';
-    } else {
-      console.log('Using remote opts');
-      mongoURL = process.env.MONGO_URL;
-    }
-
-
-    mongoose.connect(mongoURL).then(() => {
+  connectTomongo(mongoURL) {
+    mongoose.connect(mongoURL, {
+      keepAlive: true,
+      reconnectTries: 10,
+      useMongoClient: true,
+    }).then(() => {
       console.log('Connected to Mongo!');
     }).catch((err) => {
       console.log('Error occured upon mongo connection!', err);
@@ -91,13 +45,37 @@ class AlkoDB {
     console.log('Saved day status!', status);
   }
 
-  storeBulk(date, data) {
-    console.log('Bulk operation starting..');
-    return Product.collection.insert(data).then(() => {
-      console.log('Saved', data.length, 'products successfully!');
-    }).catch((err) => {
-      console.log('Something went wrong with the product bulk operation', err);
-    });
+  async storeBulk(data) {
+    console.log('Bulk operation starting --->');
+
+    try {
+      const bulk = Product.collection.initializeOrderedBulkOp();
+
+      data.forEach((item) => {
+        const pvmString = item.pvm;
+
+        bulk.find({
+          _id: item.nro,
+        }).upsert().updateOne({
+          $setOnInsert: item,
+          $push: { historia: { pvm: pvmString, hinta: item.hinta } },
+        });
+
+        // Update root object price to newest every time, cannot be done above,
+        // because mongo doesn't allow setOnInsert and set on same field
+        bulk.find({
+          _id: item.nro,
+        }).updateOne({
+          $set: { hinta: item.hinta },
+        });
+      });
+      await bulk.execute();
+      console.log('<--- Bulk operation complete!');
+      return data.length;
+    } catch (err) {
+      console.log('Something went wrong with the history object store', err);
+      return -1;
+    }
   }
 
   getDay(date) {
@@ -146,16 +124,18 @@ class AlkoDB {
 
   searchFromDB(searchTerms) {
     console.log('SEARCHING DB FOR', searchTerms);
-    const dateQuery = this.activeDate.format('DD.MM.YYYY');
     const orQuery = this.orQueries(searchTerms);
-    console.log('Searching mongo with', orQuery);
-    return Product.find({ pvm: dateQuery, $and: orQuery });
+    mongoose.set('debug', true);
+
+    console.log('Searching mongo with', JSON.stringify(orQuery));
+    return Product.find({ $and: orQuery });
   }
 
   orQueries(searchTerms) {
     const query = [];
     searchTerms.forEach((term) => {
-      const regex = new RegExp(`.*(${term}).*`, 'i');
+      const regex = new RegExp(`${term}`, 'i');
+      console.log('Regex: ', regex);
       const orQuery = {
         $or: [{ nimi: regex },
           { valmistaja: regex },
@@ -164,6 +144,7 @@ class AlkoDB {
         ],
       };
       query.push(orQuery);
+      console.log('orQuery', orQuery);
     });
     return query;
   }

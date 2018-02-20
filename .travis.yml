@@ -13,3 +13,5 @@ deploy:
   on:
     repo: hunttis/alkomaholi
     branch: master
+services:
+  - mongodb
