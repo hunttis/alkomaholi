@@ -4,7 +4,6 @@ const configuration = require('./config/configloader');
 
 mongoose.Promise = require('bluebird');
 
-const Historia = require('./models/Historia');
 const Product = require('./models/Product');
 const Day = require('./models/Day');
 
@@ -54,10 +53,9 @@ class AlkoDB {
 
       data.forEach((item) => {
         const pvmString = item.pvm;
-        item._id = item.nro;
 
         bulk.find({
-          _id: item._id,
+          _id: item.nro,
         }).upsert().updateOne({
           $setOnInsert: item,
           $push: { historia: { pvm: pvmString, hinta: item.hinta } },
@@ -66,15 +64,17 @@ class AlkoDB {
         // Update root object price to newest every time, cannot be done above,
         // because mongo doesn't allow setOnInsert and set on same field
         bulk.find({
-          _id: item._id,
+          _id: item.nro,
         }).updateOne({
           $set: { hinta: item.hinta },
         });
       });
       await bulk.execute();
       console.log('<--- Bulk operation complete!');
+      return data.length;
     } catch (err) {
       console.log('Something went wrong with the history object store', err);
+      return -1;
     }
   }
 

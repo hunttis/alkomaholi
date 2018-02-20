@@ -32,30 +32,15 @@ class AlkoLoader {
     const retrieveResult = await this.retrieveData(forDate);
     console.log('Attempted to retrieve data from ALKO servers for: ', this.formatDate(forDate), ' - Result was: ', retrieveResult);
     return retrieveResult;
-
-    // .then((dayAlreadyCached) => {
-    //   if (dayAlreadyCached) {
-    //     console.log('Using cached data');
-    //     this.alkodb.setActiveDate(forDate);
-    //     return this.alkodb.checkIfCached(forDate) ? forDate : false;
-    //   }
-    //   console.log('No cached data, retrieving from Alko');
-    //   return this.retrieveData(forDate).then((resultDate) => {
-    //     console.log(`USING DATA FOR: ${resultDate}`);
-    //     this.alkodb.setActiveDate(resultDate);
-    //     return this.alkodb.checkIfCached(resultDate) ? resultDate : false;
-    //   }).then((results) => {
-    //     console.log('Ready to return data:', results);
-    //     return results;
-    //   });
-    // });
   }
 
   retrieveData(forDate) {
     const dateString = this.formatDate(forDate);
     console.log(`Loading data for: ${dateString}`);
 
-    const fullUrl = configuration.urlStart + configuration.filenameStart + configuration.fileExtension;
+    const fullUrl = configuration.urlStart
+        + configuration.filenameStart
+        + configuration.fileExtension;
 
     console.log('Loading from URL: ', fullUrl);
 
