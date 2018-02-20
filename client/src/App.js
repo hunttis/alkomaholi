@@ -54,9 +54,9 @@ class App extends Component {
       return this.state.alkodata.map(item => {
         return <tr key={item.nimi + item.nro}>
             <td className="nimi">{item.nimi}</td>
-            <td className="numerosarake hinta">{item.hinta}</td>
-            <td className="numerosarake litrahinta">{item.litrahinta}</td>
             <td className="numerosarake pullokoko">{item.pullokoko}</td>
+            <td className="numerosarake hinta">{Number.parseFloat(item.hinta).toFixed(2)}</td>
+            <td className="numerosarake litrahinta">{Number.parseFloat(item.litrahinta).toFixed(2)}</td>
             <td className="numerosarake alkoholi">{item['alkoholi-%']}</td>
           </tr>
       })
@@ -69,17 +69,23 @@ class App extends Component {
 
     return (
       <div className="App">
-        <h1>AlkoAPI</h1>
+        <h1>
+          <div className="title">
+            <div className="titleLogo"><img src="alkomaholi.png" alt="logo" /></div>
+            <div className="titleText">Alkomaholi</div>
+          </div>
+        </h1>
         <div className="searchcontainer">
-          <input className="searchinput" placeholder="Kirjoita tuotteen nimi tai osa siitä" type="text" name="search" onChange={this.handleChange}></input>
+          <input className="searchinput" placeholder="Hae alkon hintoja kirjoittamalla tuote tai osa siitä.." type="text" name="search" onChange={this.handleChange}></input>
         </div>
+        
         <div><table className="resultstable">
-          <thead>
+          <thead className="tableheader">
             <tr>
               <th>Nimi</th>
-              <th className="numerosarake hinta">€</th>
-              <th className="numerosarake">€/l</th>
               <th className="numerosarake">Koko</th>
+              <th className="numerosarake hinta">€/pullo</th>
+              <th className="numerosarake">€/l</th>
               <th className="numerosarake">%</th>
             </tr>
           </thead>

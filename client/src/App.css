@@ -15,18 +15,24 @@
   -webkit-box-sizing: border-box;
 }
 
-thead {
-  background: #d3b1ff
+th {
+  background: #FFC4AA;
+  color: #551A00;
+}
+
+td {
+  color: #FFC4AA;
 }
 
 .numerosarake {
   text-align: right;
 }
 
-tr:nth-child(even) {background: #CCC}
+tr:nth-child(even) {background: #803615}
+tr:nth-child(odd) {background: #551A00}
 
-tr:nth-child(even) td:nth-child(3) {background: #BBB}
-tr:nth-child(odd) td:nth-child(3) {background: #DDD}
+/* tr:nth-child(even) td:nth-child(3) {background: #551A00} */
+/* tr:nth-child(odd) td:nth-child(3) {background: #803615} */
 
 select, textarea, input[type="text"], 
 input[type="password"], input[type="datetime"], 
@@ -34,6 +40,60 @@ input[type="datetime-local"], input[type="date"],
 input[type="month"], input[type="time"], input[type="week"], 
 input[type="number"], input[type="email"], input[type="url"], 
 input[type="search"], input[type="tel"], input[type="color"] {
-   font-size: 16px; 
+   font-size: 16px;
+   background-color: #FFC4AA;
+   color: #803615;
+   /* line-height: normal; */
+   /* padding: -10px; */
+   /* margin: 0px; */
 }
 
+.searchcontainer {
+  display: flex;
+  width: 100%;
+  /* height: 3em; */
+  padding-bottom: 10px;
+  justify-content: flex-end;
+}
+
+.title {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  /* color: #9575AB; */
+}
+
+.titleLogo {
+  width: 32px;
+}
+
+.titleText {
+  padding-left: 10px;
+  width: auto;
+}
+
+::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+  color: #AA5C39;
+  
+}
+::-moz-placeholder { /* Firefox 19+ */
+  color: #AA5C39;
+}
+:-ms-input-placeholder { /* IE 10+ */
+  color: #AA5C39;
+}
+:-moz-placeholder { /* Firefox 18- */
+  color: #AA5C39;
+}
+
+.color-primary-0 { color: #AA5C39 }	/* Main Primary color */
+.color-primary-1 { color: #FFC4AA }
+.color-primary-2 { color: #D48B6A }
+.color-primary-3 { color: #803615 }
+.color-primary-4 { color: #551A00 }
+
+.color-primary-0 { color: #552B72 }	/* Main Primary color */
+.color-primary-1 { color: #9575AB }
+.color-primary-2 { color: #734C8E }
+.color-primary-3 { color: #3A1355 }
+.color-primary-4 { color: #230339 }
