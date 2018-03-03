@@ -66,7 +66,7 @@ class AlkoLoader {
     const modifiedSheet = sheet.map((productitem) => {
       if (!Number.isNaN(parseInt(productitem.nro, 10))) {
         productitem.pvm = this.formatDate(forDate);
-        productitem._id = `${this.formatDate(forDate)}-${productitem.nro}`;
+        productitem.rivi_id = `${this.formatDate(forDate)}-${productitem.nro}`;
         return productitem;
       }
       return null;

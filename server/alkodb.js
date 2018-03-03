@@ -31,17 +31,22 @@ class AlkoDB {
   async storeCache(date, status) {
     const dateId = date.format('DD.MM.YYYY');
 
-    let day = await Day.findById({ _id: dateId });
+    let day = await Day.find({ day_id: dateId });
 
-    if (!day) {
+    if (Object.keys(day).length === 0 && day.constructor === Object) {
       console.log('No existing day');
-      day = new Day({ _id: dateId, status });
+      day = new Day({ day_id: dateId, status });
+      await day.save((err) => {
+        console.log('Day save error! ', err);
+      });
     } else {
       console.log('Existing day, just setting status', day);
       day.status = status;
+      await day.update((err) => {
+        console.log('Day update error! ', err);
+      });
     }
 
-    await day.save();
     console.log('Saved day status!', status);
   }
 
@@ -55,7 +60,7 @@ class AlkoDB {
         const pvmString = item.pvm;
 
         bulk.find({
-          _id: item.nro,
+          rivi_id: item.rivi_id,
         }).upsert().updateOne({
           $setOnInsert: item,
           $push: { historia: { pvm: pvmString, hinta: item.hinta } },
@@ -64,7 +69,7 @@ class AlkoDB {
         // Update root object price to newest every time, cannot be done above,
         // because mongo doesn't allow setOnInsert and set on same field
         bulk.find({
-          _id: item.nro,
+          rivi_id: item.rivi_id,
         }).updateOne({
           $set: { hinta: item.hinta },
         });
@@ -81,7 +86,7 @@ class AlkoDB {
   getDay(date) {
     const searchDate = moment(date).format('DD.MM.YYYY');
     console.log('Trying to find day: ', searchDate);
-    return Day.findById({ _id: searchDate });
+    return Day.find({ day_id: searchDate });
   }
 
   checkIfCached(date) {
