@@ -34,7 +34,7 @@ class AlkoLoader {
     return retrieveResult;
   }
 
-  retrieveData(forDate) {
+  async retrieveData(forDate) {
     const dateString = this.formatDate(forDate);
     console.log(`Loading data for: ${dateString}`);
 
@@ -43,6 +43,13 @@ class AlkoLoader {
         + configuration.fileExtension;
 
     console.log('Loading from URL: ', fullUrl);
+
+    try {
+      await this.alkodb.storeCache(forDate, 'WORKING');
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
 
     return fetch(fullUrl)
       .then(response => response.buffer())
@@ -66,7 +73,7 @@ class AlkoLoader {
     const modifiedSheet = sheet.map((productitem) => {
       if (!Number.isNaN(parseInt(productitem.nro, 10))) {
         productitem.pvm = this.formatDate(forDate);
-        productitem._id = `${this.formatDate(forDate)}-${productitem.nro}`;
+        productitem.rivi_id = `${this.formatDate(forDate)}-${productitem.nro}`;
         return productitem;
       }
       return null;

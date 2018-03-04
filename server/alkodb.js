@@ -2,8 +2,6 @@ const moment = require('moment');
 const mongoose = require('mongoose');
 const configuration = require('./config/configloader');
 
-mongoose.Promise = require('bluebird');
-
 const Product = require('./models/Product');
 const Day = require('./models/Day');
 
@@ -19,7 +17,6 @@ class AlkoDB {
     mongoose.connect(mongoURL, {
       keepAlive: true,
       reconnectTries: 10,
-      useMongoClient: true,
     }).then(() => {
       console.log('Connected to Mongo!');
     }).catch((err) => {
@@ -27,22 +24,9 @@ class AlkoDB {
     });
   }
 
-
   async storeCache(date, status) {
-    const dateId = date.format('DD.MM.YYYY');
-
-    let day = await Day.findById({ _id: dateId });
-
-    if (!day) {
-      console.log('No existing day');
-      day = new Day({ _id: dateId, status });
-    } else {
-      console.log('Existing day, just setting status', day);
-      day.status = status;
-    }
-
-    await day.save();
-    console.log('Saved day status!', status);
+    const dateString = date.format('DD.MM.YYYY');
+    return Day.findOneAndUpdate({ dateString }, { status }, { upsert: true }).exec();
   }
 
   async storeBulk(data) {
@@ -55,7 +39,7 @@ class AlkoDB {
         const pvmString = item.pvm;
 
         bulk.find({
-          _id: item.nro,
+          rivi_id: item.rivi_id,
         }).upsert().updateOne({
           $setOnInsert: item,
           $push: { historia: { pvm: pvmString, hinta: item.hinta } },
@@ -64,7 +48,7 @@ class AlkoDB {
         // Update root object price to newest every time, cannot be done above,
         // because mongo doesn't allow setOnInsert and set on same field
         bulk.find({
-          _id: item.nro,
+          rivi_id: item.rivi_id,
         }).updateOne({
           $set: { hinta: item.hinta },
         });
@@ -79,9 +63,9 @@ class AlkoDB {
   }
 
   getDay(date) {
-    const searchDate = moment(date).format('DD.MM.YYYY');
-    console.log('Trying to find day: ', searchDate);
-    return Day.findById({ _id: searchDate });
+    const dateString = moment(date).format('DD.MM.YYYY');
+    console.log('Trying to find day: ', dateString);
+    return Day.findOne({ dateString });
   }
 
   checkIfCached(date) {

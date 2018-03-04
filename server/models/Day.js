@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
-const dayModel = mongoose.model('Day', mongoose.Schema({
-  _id: String,
+const day = mongoose.model('Day', new mongoose.Schema({
+  dateString: String,
   status: String,
 }));
 
-module.exports = dayModel;
+module.exports = day;

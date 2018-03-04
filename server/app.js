@@ -25,7 +25,7 @@ function setServerRefresh() {
     console.log('Refreshing server!');
     initializeServer();
     setServerRefresh();
-  }, 3600000);
+  }, 3600000 * 3);
 }
 
 function initializeServer() {
