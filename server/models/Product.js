@@ -30,7 +30,6 @@ const productModel = mongoose.model('Product', mongoose.Schema({
   energia: String,
   valikoima: String,
   pvm: String,
-  _id: String,
   historia: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Historia' }],
 }));
 

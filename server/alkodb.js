@@ -2,8 +2,6 @@ const moment = require('moment');
 const mongoose = require('mongoose');
 const configuration = require('./config/configloader');
 
-mongoose.Promise = require('bluebird');
-
 const Product = require('./models/Product');
 const Day = require('./models/Day');
 
@@ -19,7 +17,6 @@ class AlkoDB {
     mongoose.connect(mongoURL, {
       keepAlive: true,
       reconnectTries: 10,
-      useMongoClient: true,
     }).then(() => {
       console.log('Connected to Mongo!');
     }).catch((err) => {
@@ -27,27 +24,9 @@ class AlkoDB {
     });
   }
 
-
   async storeCache(date, status) {
-    const dateId = date.format('DD.MM.YYYY');
-
-    let day = await Day.find({ day_id: dateId });
-
-    if (Object.keys(day).length === 0 && day.constructor === Object) {
-      console.log('No existing day');
-      day = new Day({ day_id: dateId, status });
-      await day.save((err) => {
-        console.log('Day save error! ', err);
-      });
-    } else {
-      console.log('Existing day, just setting status', day);
-      day.status = status;
-      await day.update((err) => {
-        console.log('Day update error! ', err);
-      });
-    }
-
-    console.log('Saved day status!', status);
+    const dateString = date.format('DD.MM.YYYY');
+    return Day.findOneAndUpdate({ dateString }, { status }, { upsert: true }).exec();
   }
 
   async storeBulk(data) {
@@ -84,9 +63,9 @@ class AlkoDB {
   }
 
   getDay(date) {
-    const searchDate = moment(date).format('DD.MM.YYYY');
-    console.log('Trying to find day: ', searchDate);
-    return Day.find({ day_id: searchDate });
+    const dateString = moment(date).format('DD.MM.YYYY');
+    console.log('Trying to find day: ', dateString);
+    return Day.findOne({ dateString });
   }
 
   checkIfCached(date) {
