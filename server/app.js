@@ -32,11 +32,13 @@ function initializeServer() {
   alkoLoader.getDataForSpecificDay(moment());
 }
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(`${__dirname}/../client/build`));
-} else {
-  app.use(/^\/(?!api).*/, proxy({ target: 'http://localhost:3000', changeOrigin: false }));
-}
+app.use(express.static(`${__dirname}/builtclient/`));
+
+// if (process.env.NODE_ENV === 'production') {
+//   app.use(express.static(`${__dirname}/../client/build`));
+// } else {
+//   app.use(/^\/(?!api).*/, proxy({ target: 'http://localhost:1234', changeOrigin: false }));
+// }
 
 app.get('/api/alldata', (req, res) => {
   alkoLoader.getAllDataForDay(moment()).then((result) => {
@@ -66,7 +68,7 @@ app.get('/api/refreshdata', (req, res) => {
   res.send('Refreshing.. <a href="/">Back to frontpage</a>');
 });
 
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 3000;
 app.set('port', port);
 
 server.listen(port);

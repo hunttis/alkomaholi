@@ -72,9 +72,10 @@ class AlkoLoader {
     // Only store value if it's part of the actual data and not alko notes or headers
     const modifiedSheet = sheet.map((productitem) => {
       if (!Number.isNaN(parseInt(productitem.nro, 10))) {
-        productitem.pvm = this.formatDate(forDate);
-        productitem.rivi_id = `${productitem.nro}`;
-        return productitem;
+        let newProductItem = JSON.parse(JSON.stringify(productitem));
+        newProductItem.pvm = this.formatDate(forDate);
+        newProductItem.rivi_id = `${newProductItem.nro}`;
+        return newProductItem;
       }
       return null;
     }).filter(item => !!item);

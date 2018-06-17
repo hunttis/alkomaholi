@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "parcel-bundler": "^1.9.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-scripts": "1.0.17"
@@ -22,7 +23,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "lint": "eslint .",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "parcel": "parcel ./src/index.js --out-dir ../builtclient/ --out-file ../buildclient/index.html"
+
   },
   "homepage": "/"
 }
