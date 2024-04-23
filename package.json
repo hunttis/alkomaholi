@@ -24,7 +24,7 @@
     "http-proxy-middleware": "^0.17.4",
     "isomorphic-fetch": "^2.2.1",
     "moment": "^2.20.1",
-    "mongoose": "^5.0.8",
+    "mongoose": "^5.13.20",
     "node-fetch": "^1.7.3",
     "serve-favicon": "~2.4.5",
     "underscore": "^1.8.3",
